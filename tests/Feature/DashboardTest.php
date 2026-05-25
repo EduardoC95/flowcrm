@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,6 +20,10 @@ class DashboardTest extends TestCase
     public function test_authenticated_users_can_visit_the_dashboard()
     {
         $user = User::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $user->tenants()->attach($tenant->id, ['role' => Tenant::ROLE_OWNER]);
+        $user->forceFill(['current_tenant_id' => $tenant->id])->save();
+
         $this->actingAs($user);
 
         $response = $this->get('/dashboard');

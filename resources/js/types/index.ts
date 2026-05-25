@@ -4,6 +4,12 @@ export interface Auth {
     user: User;
 }
 
+export interface Tenant {
+    id: number;
+    name: string;
+    slug: string;
+}
+
 export interface BreadcrumbItem {
     title: string;
     href: string;
@@ -34,6 +40,7 @@ export interface User {
     name: string;
     email: string;
     avatar?: string;
+    current_tenant_id: number | null;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
