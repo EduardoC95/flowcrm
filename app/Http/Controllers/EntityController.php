@@ -96,7 +96,7 @@ class EntityController extends Controller
         Gate::authorize('view', $entity);
 
         $entity->load([
-            'people:id,tenant_id,entity_id,name,email,phone,job_title',
+            'people:id,tenant_id,entity_id,name,email,phone,position,job_title',
             'deals:id,tenant_id,entity_id,title,stage,value,expected_close_date,created_at',
             'calendarEvents:id,tenant_id,entity_id,title,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query

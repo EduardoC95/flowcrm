@@ -17,6 +17,7 @@ class CalendarEvent extends Model
     protected $fillable = [
         'tenant_id',
         'entity_id',
+        'person_id',
         'deal_id',
         'title',
         'starts_at',
@@ -36,6 +37,11 @@ class CalendarEvent extends Model
     public function entity(): BelongsTo
     {
         return $this->belongsTo(Entity::class);
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
     }
 
     public function deal(): BelongsTo

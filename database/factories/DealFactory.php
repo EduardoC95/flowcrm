@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Deal;
 use App\Models\Entity;
+use App\Models\Person;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,7 @@ class DealFactory extends Factory
         return [
             'tenant_id' => Tenant::factory(),
             'entity_id' => null,
+            'person_id' => null,
             'title' => fake()->sentence(3),
             'stage' => 'new',
             'value' => fake()->randomFloat(2, 1000, 50000),
@@ -31,6 +33,15 @@ class DealFactory extends Factory
         return $this->state(fn () => [
             'tenant_id' => $entity->tenant_id,
             'entity_id' => $entity->id,
+        ]);
+    }
+
+    public function forPerson(Person $person): static
+    {
+        return $this->state(fn () => [
+            'tenant_id' => $person->tenant_id,
+            'entity_id' => $person->entity_id,
+            'person_id' => $person->id,
         ]);
     }
 }

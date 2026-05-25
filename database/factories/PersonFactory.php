@@ -22,6 +22,9 @@ class PersonFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->safeEmail(),
             'phone' => fake()->phoneNumber(),
+            'position' => fake()->jobTitle(),
+            'status' => fake()->randomElement(Person::STATUSES),
+            'notes' => fake()->optional()->sentence(),
             'job_title' => fake()->jobTitle(),
         ];
     }

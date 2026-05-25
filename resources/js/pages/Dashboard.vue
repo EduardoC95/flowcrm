@@ -23,7 +23,7 @@ defineProps<{
 
 const shortcuts = [
     { title: 'Entidades', href: '/entities', icon: Building2, description: 'Empresas, clientes e organizações.' },
-    { title: 'Pessoas', href: '/crm/people', icon: UsersRound, description: 'Contactos e decisores associados.' },
+    { title: 'Pessoas', href: '/people', icon: UsersRound, description: 'Contactos e decisores associados.' },
     { title: 'Calendário', href: '/crm/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/crm/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
 ];

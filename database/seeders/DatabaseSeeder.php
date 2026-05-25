@@ -48,15 +48,31 @@ class DatabaseSeeder extends Seeder
             'tenant_id' => $tenant->id,
         ]));
 
-        $entity = $entities->first();
+        $people = collect([
+            ['entity' => 0, 'name' => 'Maria Silva', 'email' => 'maria@acme.test', 'phone' => '+351 910 100 001', 'position' => 'Commercial Director', 'status' => Person::STATUS_CLIENT],
+            ['entity' => 0, 'name' => 'Joao Pereira', 'email' => 'joao@acme.test', 'phone' => '+351 910 100 002', 'position' => 'Operations Manager', 'status' => Person::STATUS_ACTIVE],
+            ['entity' => 1, 'name' => 'Ana Costa', 'email' => 'ana@northwind.test', 'phone' => '+351 910 100 003', 'position' => 'Head of Sales', 'status' => Person::STATUS_PROSPECT],
+            ['entity' => 2, 'name' => 'Rui Martins', 'email' => 'rui@bluepeak.test', 'phone' => '+351 910 100 004', 'position' => 'Managing Partner', 'status' => Person::STATUS_LEAD],
+            ['entity' => null, 'name' => 'Sofia Almeida', 'email' => 'sofia.independent@test', 'phone' => '+351 910 100 005', 'position' => 'Consultant', 'status' => Person::STATUS_ACTIVE],
+            ['entity' => null, 'name' => 'Miguel Santos', 'email' => 'miguel.freelance@test', 'phone' => '+351 910 100 006', 'position' => 'Advisor', 'status' => Person::STATUS_INACTIVE],
+        ])->map(function (array $attributes) use ($entities, $tenant) {
+            $entity = is_int($attributes['entity']) ? $entities->get($attributes['entity']) : null;
 
-        Person::factory()->forEntity($entity)->create([
-            'name' => 'Maria Silva',
-            'email' => 'maria@acme.test',
-            'job_title' => 'Commercial Director',
-        ]);
+            return Person::factory()->create([
+                'tenant_id' => $tenant->id,
+                'entity_id' => $entity?->id,
+                'name' => $attributes['name'],
+                'email' => $attributes['email'],
+                'phone' => $attributes['phone'],
+                'position' => $attributes['position'],
+                'job_title' => $attributes['position'],
+                'status' => $attributes['status'],
+            ]);
+        });
 
-        $deal = Deal::factory()->forEntity($entity)->create([
+        $person = $people->first();
+
+        $deal = Deal::factory()->forPerson($person)->create([
             'title' => 'CRM rollout',
             'stage' => 'qualification',
             'value' => 12500,

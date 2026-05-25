@@ -10,6 +10,7 @@ interface RelatedPerson {
     name: string;
     email: string | null;
     phone: string | null;
+    position: string | null;
     job_title: string | null;
 }
 
@@ -165,8 +166,8 @@ const destroy = () => {
                     <div class="mt-4 space-y-3">
                         <div v-if="entity.people.length === 0" class="text-sm text-muted-foreground">Ainda não há pessoas associadas.</div>
                         <div v-for="person in entity.people" :key="person.id" class="rounded-md border p-3">
-                            <div class="font-medium">{{ person.name }}</div>
-                            <div class="text-sm text-muted-foreground">{{ person.job_title ?? '-' }}</div>
+                            <Link :href="`/people/${person.id}`" class="font-medium text-primary hover:underline">{{ person.name }}</Link>
+                            <div class="text-sm text-muted-foreground">{{ person.position ?? person.job_title ?? '-' }}</div>
                             <div class="mt-1 text-sm text-muted-foreground">{{ person.email ?? '-' }} · {{ person.phone ?? '-' }}</div>
                         </div>
                     </div>

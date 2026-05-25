@@ -20,7 +20,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Pessoas',
-        url: '/crm/people',
+        url: '/people',
         icon: UsersRound,
     },
     {
