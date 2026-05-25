@@ -32,6 +32,6 @@ class DealPolicy
 
     public function delete(User $user, Deal $deal): bool
     {
-        return $this->sameTenant($user, $deal) && $this->canDelete($user);
+        return $this->sameTenant($user, $deal) && $this->canWrite($user);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DealStage;
 use App\Models\Tenant;
 use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
@@ -39,6 +40,8 @@ class TenantOnboardingController extends Controller
         $request->user()->forceFill([
             'current_tenant_id' => $tenant->id,
         ])->save();
+
+        DealStage::ensureDefaultStages($tenant);
 
         $logger->log(
             'created',

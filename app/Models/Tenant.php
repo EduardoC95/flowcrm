@@ -63,6 +63,11 @@ class Tenant extends Model
         return $this->hasMany(Deal::class);
     }
 
+    public function dealStages(): HasMany
+    {
+        return $this->hasMany(DealStage::class);
+    }
+
     public function calendarEvents(): HasMany
     {
         return $this->hasMany(CalendarEvent::class);

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\CalendarEvent;
 use App\Models\Deal;
+use App\Models\DealStage;
 use App\Models\Entity;
 use App\Models\Person;
 use App\Models\Tenant;
@@ -36,6 +37,8 @@ class DatabaseSeeder extends Seeder
         $user->tenants()->attach($tenant->id, [
             'role' => Tenant::ROLE_OWNER,
         ]);
+
+        DealStage::ensureDefaultStages($tenant);
 
         $entities = collect([
             ['name' => 'Acme Portugal', 'vat' => 'PT509999001', 'status' => Entity::STATUS_CLIENT, 'email' => 'hello@acme.test'],
@@ -70,13 +73,37 @@ class DatabaseSeeder extends Seeder
             ]);
         });
 
-        $person = $people->first();
+        $stages = $tenant->dealStages()->orderBy('position')->get()->keyBy('slug');
 
-        $deal = Deal::factory()->forPerson($person)->create([
-            'title' => 'CRM rollout',
-            'stage' => 'qualification',
-            'value' => 12500,
-        ]);
+        $deals = collect([
+            ['stage' => DealStage::SLUG_LEAD, 'entity' => 3, 'person' => 3, 'title' => 'Qualificação para expansão solar', 'value' => 8500, 'probability' => 15, 'days' => 12, 'priority' => Deal::PRIORITY_MEDIUM],
+            ['stage' => DealStage::SLUG_PROPOSAL, 'entity' => 0, 'person' => 0, 'title' => 'CRM rollout', 'value' => 12500, 'probability' => 45, 'days' => 20, 'priority' => Deal::PRIORITY_HIGH],
+            ['stage' => DealStage::SLUG_NEGOTIATION, 'entity' => 1, 'person' => 2, 'title' => 'Automação comercial anual', 'value' => 32000, 'probability' => 65, 'days' => 30, 'priority' => Deal::PRIORITY_HIGH],
+            ['stage' => DealStage::SLUG_FOLLOW_UP, 'entity' => 2, 'person' => 3, 'title' => 'Acompanhamento pós-proposta', 'value' => 7800, 'probability' => 55, 'days' => 7, 'priority' => Deal::PRIORITY_URGENT],
+            ['stage' => DealStage::SLUG_WON, 'entity' => 0, 'person' => 1, 'title' => 'Serviços de onboarding', 'value' => 5400, 'probability' => 100, 'days' => -5, 'priority' => Deal::PRIORITY_LOW],
+            ['stage' => DealStage::SLUG_LOST, 'entity' => 4, 'person' => null, 'title' => 'Projeto suspenso', 'value' => 4200, 'probability' => 0, 'days' => -10, 'priority' => Deal::PRIORITY_LOW],
+        ])->map(function (array $attributes) use ($entities, $people, $stages, $tenant, $user) {
+            $entity = is_int($attributes['entity']) ? $entities->get($attributes['entity']) : null;
+            $person = is_int($attributes['person']) ? $people->get($attributes['person']) : null;
+            $stage = $stages->get($attributes['stage']);
+
+            return Deal::factory()->create([
+                'tenant_id' => $tenant->id,
+                'entity_id' => $entity?->id ?? $person?->entity_id,
+                'person_id' => $person?->id,
+                'owner_id' => $user->id,
+                'deal_stage_id' => $stage?->id,
+                'title' => $attributes['title'],
+                'stage' => $stage?->slug ?? DealStage::SLUG_LEAD,
+                'value' => $attributes['value'],
+                'probability' => $attributes['probability'],
+                'expected_close_date' => now()->addDays($attributes['days']),
+                'priority' => $attributes['priority'],
+                'description' => 'Negócio demo para validar pipeline, filtros e histórico comercial.',
+            ]);
+        });
+
+        $deal = $deals->firstWhere('title', 'CRM rollout');
 
         CalendarEvent::factory()->forDeal($deal)->create([
             'title' => 'Discovery call',

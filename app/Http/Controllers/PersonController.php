@@ -111,7 +111,9 @@ class PersonController extends Controller
 
         $person->load([
             'entity:id,name,email,phone,status',
-            'deals:id,tenant_id,entity_id,person_id,title,stage,value,expected_close_date,created_at',
+            'deals:id,tenant_id,entity_id,person_id,owner_id,deal_stage_id,title,stage,value,probability,expected_close_date,priority,created_at',
+            'deals.stage:id,name,slug,color',
+            'deals.owner:id,name',
             'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,title,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query
                 ->latest()

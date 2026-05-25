@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CrmModuleController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DealController;
 use App\Http\Controllers\EntityController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\TenantOnboardingController;
@@ -23,6 +24,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('entities', EntityController::class);
         Route::post('people/{person}/merge', [PersonController::class, 'merge'])->name('people.merge');
         Route::resource('people', PersonController::class);
+        Route::get('deals-board', [DealController::class, 'board'])->name('deals.board');
+        Route::patch('deals/{deal}/move-stage', [DealController::class, 'moveStage'])->name('deals.move-stage');
+        Route::resource('deals', DealController::class);
         Route::get('crm/{module}', CrmModuleController::class)->name('crm.module');
     });
 });

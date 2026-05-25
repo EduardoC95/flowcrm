@@ -16,8 +16,8 @@ interface RelatedEntity {
 interface RelatedDeal {
     id: number;
     title: string;
-    stage: string;
-    value: string;
+    stage: string | { id: number; name: string; slug: string; color: string | null } | null;
+    value: string | number;
     expected_close_date: string | null;
 }
 
@@ -91,6 +91,8 @@ const destroy = () => {
     }
 };
 
+const dealStageName = (deal: RelatedDeal) => (typeof deal.stage === 'string' ? deal.stage : (deal.stage?.name ?? '-'));
+
 const merge = () => {
     if (!mergeForm.target_person_id) {
         return;
@@ -126,7 +128,7 @@ const merge = () => {
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <Button as-child variant="outline">
-                        <Link href="/crm/deals">
+                        <Link href="/deals/create">
                             <GitMerge class="size-4" />
                             Criar negócio
                         </Link>
@@ -195,8 +197,8 @@ const merge = () => {
                     <div class="mt-4 space-y-3">
                         <div v-if="person.deals.length === 0" class="text-sm text-muted-foreground">Ainda não há negócios associados.</div>
                         <div v-for="deal in person.deals" :key="deal.id" class="rounded-md border p-3">
-                            <div class="font-medium">{{ deal.title }}</div>
-                            <div class="text-sm text-muted-foreground">{{ deal.stage }} · {{ deal.value }} EUR</div>
+                            <Link :href="`/deals/${deal.id}`" class="font-medium text-primary hover:underline">{{ deal.title }}</Link>
+                            <div class="text-sm text-muted-foreground">{{ dealStageName(deal) }} · {{ deal.value }} EUR</div>
                             <div class="mt-1 text-sm text-muted-foreground">Fecho previsto: {{ deal.expected_close_date ?? '-' }}</div>
                         </div>
                     </div>

@@ -17,8 +17,8 @@ interface RelatedPerson {
 interface RelatedDeal {
     id: number;
     title: string;
-    stage: string;
-    value: string;
+    stage: string | { id: number; name: string; slug: string; color: string | null } | null;
+    value: string | number;
     expected_close_date: string | null;
 }
 
@@ -80,6 +80,8 @@ const destroy = () => {
         router.delete(`/entities/${props.entity.id}`);
     }
 };
+
+const dealStageName = (deal: RelatedDeal) => (typeof deal.stage === 'string' ? deal.stage : (deal.stage?.name ?? '-'));
 </script>
 
 <template>
@@ -178,8 +180,8 @@ const destroy = () => {
                     <div class="mt-4 space-y-3">
                         <div v-if="entity.deals.length === 0" class="text-sm text-muted-foreground">Ainda não há negócios associados.</div>
                         <div v-for="deal in entity.deals" :key="deal.id" class="rounded-md border p-3">
-                            <div class="font-medium">{{ deal.title }}</div>
-                            <div class="text-sm text-muted-foreground">{{ deal.stage }} · {{ deal.value }} EUR</div>
+                            <Link :href="`/deals/${deal.id}`" class="font-medium text-primary hover:underline">{{ deal.title }}</Link>
+                            <div class="text-sm text-muted-foreground">{{ dealStageName(deal) }} · {{ deal.value }} EUR</div>
                             <div class="mt-1 text-sm text-muted-foreground">Fecho previsto: {{ deal.expected_close_date ?? '-' }}</div>
                         </div>
                     </div>
