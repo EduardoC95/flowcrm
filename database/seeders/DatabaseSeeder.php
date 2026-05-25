@@ -37,11 +37,18 @@ class DatabaseSeeder extends Seeder
             'role' => Tenant::ROLE_OWNER,
         ]);
 
-        $entity = Entity::factory()->create([
+        $entities = collect([
+            ['name' => 'Acme Portugal', 'vat' => 'PT509999001', 'status' => Entity::STATUS_CLIENT, 'email' => 'hello@acme.test'],
+            ['name' => 'Northwind Labs', 'vat' => 'PT509999002', 'status' => Entity::STATUS_ACTIVE, 'email' => 'sales@northwind.test'],
+            ['name' => 'Blue Peak Retail', 'vat' => 'PT509999003', 'status' => Entity::STATUS_PROSPECT, 'email' => 'contact@bluepeak.test'],
+            ['name' => 'Lisbon Solar Group', 'vat' => 'PT509999004', 'status' => Entity::STATUS_LEAD, 'email' => 'hello@lisbonsolar.test'],
+            ['name' => 'Old Harbor Services', 'vat' => 'PT509999005', 'status' => Entity::STATUS_INACTIVE, 'email' => 'office@oldharbor.test'],
+        ])->map(fn (array $attributes) => Entity::factory()->create([
+            ...$attributes,
             'tenant_id' => $tenant->id,
-            'name' => 'Acme Portugal',
-            'email' => 'hello@acme.test',
-        ]);
+        ]));
+
+        $entity = $entities->first();
 
         Person::factory()->forEntity($entity)->create([
             'name' => 'Maria Silva',

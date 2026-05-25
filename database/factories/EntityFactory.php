@@ -19,8 +19,12 @@ class EntityFactory extends Factory
             'tenant_id' => Tenant::factory(),
             'name' => fake()->company(),
             'type' => 'company',
+            'vat' => fake()->optional()->numerify('PT#########'),
             'email' => fake()->companyEmail(),
             'phone' => fake()->phoneNumber(),
+            'address' => fake()->address(),
+            'status' => fake()->randomElement(Entity::STATUSES),
+            'notes' => fake()->optional()->sentence(),
             'metadata' => null,
         ];
     }

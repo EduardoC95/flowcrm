@@ -43,16 +43,19 @@ class ActivityLogger
     public function forModel(Model $model, string $action): ActivityLog
     {
         $module = Str::of(class_basename($model))->kebab()->plural()->toString();
+        $subject = Str::of(class_basename($model))->kebab()->toString();
         $tenantId = $model->getAttribute('tenant_id');
 
         return $this->log(
-            $action,
+            $subject.'.'.$action,
             $module,
             $tenantId,
             $model,
             sprintf('%s %s.', class_basename($model), $action),
             [
+                'attributes' => $action === 'created' ? $model->getAttributes() : null,
                 'changes' => $action === 'updated' ? $model->getChanges() : null,
+                'original' => $action === 'updated' ? array_intersect_key($model->getOriginal(), $model->getChanges()) : null,
             ],
         );
     }

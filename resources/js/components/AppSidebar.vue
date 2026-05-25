@@ -15,7 +15,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Entidades',
-        url: '/crm/entities',
+        url: '/entities',
         icon: Building2,
     },
     {

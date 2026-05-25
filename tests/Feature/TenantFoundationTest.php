@@ -74,19 +74,19 @@ class TenantFoundationTest extends TestCase
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
             'module' => 'entities',
-            'action' => 'created',
+            'action' => 'entity.created',
         ]);
         $this->assertDatabaseHas('activity_logs', [
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
             'module' => 'entities',
-            'action' => 'updated',
+            'action' => 'entity.updated',
         ]);
         $this->assertDatabaseHas('activity_logs', [
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,
             'module' => 'entities',
-            'action' => 'deleted',
+            'action' => 'entity.deleted',
         ]);
     }
 
