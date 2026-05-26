@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-vue-next';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, Download, Mail, Paperclip, Pencil, Trash2, X } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface Option {
     id: number;
@@ -40,6 +43,21 @@ interface CalendarEvent {
     location: string | null;
 }
 
+interface DealProposal {
+    id: number;
+    original_name: string;
+    mime_type: string;
+    size: number;
+    status: 'draft' | 'sent';
+    created_at: string | null;
+    sent_at: string | null;
+    recipient_email: string | null;
+    email_subject: string | null;
+    uploader: Option | null;
+    sender: Option | null;
+    download_url: string;
+}
+
 const props = defineProps<{
     deal: {
         id: number;
@@ -56,12 +74,14 @@ const props = defineProps<{
         person: Option | null;
         owner: Option | null;
         stage: Stage | null;
+        proposals: DealProposal[];
         calendar_events: CalendarEvent[];
         activity_logs: ActivityLog[];
     };
     can: {
         update: boolean;
         delete: boolean;
+        manageProposals: boolean;
     };
 }>();
 
@@ -78,6 +98,23 @@ const priorityLabels: Record<string, string> = {
     urgent: 'Urgente',
 };
 
+const showSendModal = ref(false);
+const selectedProposal = ref<DealProposal | null>(null);
+const previewLoading = ref(false);
+
+const uploadForm = useForm<{ proposal: File | null }>({
+    proposal: null,
+});
+
+const sendForm = useForm({
+    recipient_email: '',
+    email_subject: '',
+    email_body: '',
+});
+
+const latestProposal = computed(() => props.deal.proposals[0] ?? null);
+const sentProposals = computed(() => props.deal.proposals.filter((proposal) => proposal.status === 'sent'));
+
 const money = (value: number) =>
     new Intl.NumberFormat('pt-PT', {
         style: 'currency',
@@ -89,6 +126,82 @@ const destroy = () => {
         router.delete(`/deals/${props.deal.id}`);
     }
 };
+
+const selectProposalFile = (event: Event) => {
+    uploadForm.proposal = (event.target as HTMLInputElement).files?.[0] ?? null;
+};
+
+const formatBytes = (bytes: number) => {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+const uploadProposal = () => {
+    uploadForm.post(`/deals/${props.deal.id}/proposals`, {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => uploadForm.reset(),
+    });
+};
+
+const removeProposal = (proposal: DealProposal) => {
+    if (confirm(`Remover a proposta "${proposal.original_name}"?`)) {
+        router.delete(`/deals/${props.deal.id}/proposals/${proposal.id}`, {
+            preserveScroll: true,
+        });
+    }
+};
+
+const openSendModal = async (proposal: DealProposal) => {
+    selectedProposal.value = proposal;
+    showSendModal.value = true;
+    previewLoading.value = true;
+    sendForm.clearErrors();
+
+    try {
+        const response = await fetch(`/deals/${props.deal.id}/proposals/${proposal.id}/preview-email`, {
+            headers: {
+                Accept: 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('preview failed');
+        }
+
+        const data = await response.json();
+        sendForm.recipient_email = data.recipient_email ?? '';
+        sendForm.email_subject = data.email_subject ?? '';
+        sendForm.email_body = data.email_body ?? '';
+    } finally {
+        previewLoading.value = false;
+    }
+};
+
+const closeSendModal = () => {
+    showSendModal.value = false;
+    selectedProposal.value = null;
+    sendForm.reset();
+    sendForm.clearErrors();
+};
+
+const sendProposal = () => {
+    if (!selectedProposal.value) {
+        return;
+    }
+
+    sendForm.post(`/deals/${props.deal.id}/proposals/${selectedProposal.value.id}/send`, {
+        preserveScroll: true,
+        onSuccess: closeSendModal,
+    });
+};
 </script>
 
 <template>
@@ -98,6 +211,9 @@ const destroy = () => {
         <div class="flex h-full flex-1 flex-col gap-4 p-4">
             <div v-if="page.props.flash.success" class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 {{ page.props.flash.success }}
+            </div>
+            <div v-if="page.props.flash.error" class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {{ page.props.flash.error }}
             </div>
 
             <section class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -183,8 +299,68 @@ const destroy = () => {
                     </section>
 
                     <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
-                        <h2 class="font-medium">Proposta</h2>
-                        <p class="mt-2 text-sm text-muted-foreground">Área reservada para documentos, versões e aprovação comercial.</p>
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="font-medium">Proposta</h2>
+                            <span v-if="latestProposal" class="rounded-full border px-2 py-1 text-xs font-medium">
+                                {{ latestProposal.status === 'sent' ? 'Enviada' : 'Rascunho' }}
+                            </span>
+                        </div>
+
+                        <div v-if="!latestProposal" class="mt-4 rounded-md border border-dashed p-4">
+                            <p class="text-sm text-muted-foreground">Ainda não há proposta adicionada a este negócio.</p>
+                            <form v-if="can.manageProposals" class="mt-4 space-y-3" @submit.prevent="uploadProposal">
+                                <Input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" @input="selectProposalFile" />
+                                <p v-if="uploadForm.errors.proposal" class="text-sm text-destructive">{{ uploadForm.errors.proposal }}</p>
+                                <Button type="submit" :disabled="uploadForm.processing || !uploadForm.proposal">
+                                    <Paperclip class="size-4" />
+                                    Adicionar proposta
+                                </Button>
+                            </form>
+                        </div>
+
+                        <div v-else class="mt-4 space-y-4">
+                            <div class="rounded-md border p-3 text-sm">
+                                <p class="font-medium">{{ latestProposal.original_name }}</p>
+                                <p class="mt-1 text-muted-foreground">
+                                    {{ formatBytes(latestProposal.size) }} · carregada em {{ latestProposal.created_at ?? '-' }} por
+                                    {{ latestProposal.uploader?.name ?? '-' }}
+                                </p>
+                                <p v-if="latestProposal.sent_at" class="mt-1 text-muted-foreground">
+                                    Enviada em {{ latestProposal.sent_at }} por {{ latestProposal.sender?.name ?? '-' }}
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2">
+                                <Button as-child variant="outline" size="sm">
+                                    <a :href="latestProposal.download_url">
+                                        <Download class="size-4" />
+                                        Download
+                                    </a>
+                                </Button>
+                                <Button v-if="can.manageProposals" size="sm" @click="openSendModal(latestProposal)">
+                                    <Mail class="size-4" />
+                                    Enviar proposta ao cliente
+                                </Button>
+                                <Button
+                                    v-if="can.manageProposals && latestProposal.status !== 'sent'"
+                                    variant="outline"
+                                    size="sm"
+                                    @click="removeProposal(latestProposal)"
+                                >
+                                    <Trash2 class="size-4" />
+                                    Remover
+                                </Button>
+                            </div>
+
+                            <form v-if="can.manageProposals" class="space-y-3 border-t pt-4" @submit.prevent="uploadProposal">
+                                <Label>Substituir/adicionar nova versão</Label>
+                                <Input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" @input="selectProposalFile" />
+                                <p v-if="uploadForm.errors.proposal" class="text-sm text-destructive">{{ uploadForm.errors.proposal }}</p>
+                                <Button type="submit" variant="outline" size="sm" :disabled="uploadForm.processing || !uploadForm.proposal"
+                                    >Adicionar ficheiro</Button
+                                >
+                            </form>
+                        </div>
                     </section>
                 </aside>
             </div>
@@ -204,6 +380,11 @@ const destroy = () => {
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <h2 class="font-medium">Histórico/Logs</h2>
                     <div class="mt-4 space-y-3">
+                        <div v-for="proposal in sentProposals" :key="`sent-${proposal.id}`" class="rounded-md border p-3 text-sm">
+                            <p class="font-medium">Proposta enviada</p>
+                            <p class="text-muted-foreground">{{ proposal.sent_at ?? '-' }} · {{ proposal.sender?.name ?? '-' }}</p>
+                            <p class="text-muted-foreground">{{ proposal.recipient_email }} · {{ proposal.email_subject }}</p>
+                        </div>
                         <div v-for="log in deal.activity_logs" :key="log.id" class="rounded-md border p-3 text-sm">
                             <p class="font-medium">{{ log.action }}</p>
                             <p class="text-muted-foreground">{{ log.description ?? '-' }}</p>
@@ -225,6 +406,55 @@ const destroy = () => {
                         </Button>
                     </div>
                 </section>
+            </div>
+        </div>
+
+        <div v-if="showSendModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div class="w-full max-w-2xl rounded-lg border bg-background p-5 shadow-lg">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold">Enviar proposta ao cliente</h2>
+                        <p class="text-sm text-muted-foreground">{{ selectedProposal?.original_name }}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" @click="closeSendModal">
+                        <X class="size-4" />
+                    </Button>
+                </div>
+
+                <div v-if="previewLoading" class="mt-5 rounded-md border p-4 text-sm text-muted-foreground">A preparar email...</div>
+
+                <form v-else class="mt-5 space-y-4" @submit.prevent="sendProposal">
+                    <div class="space-y-2">
+                        <Label for="recipient_email">Destinatário</Label>
+                        <Input id="recipient_email" v-model="sendForm.recipient_email" type="email" />
+                        <p v-if="sendForm.errors.recipient_email" class="text-sm text-destructive">{{ sendForm.errors.recipient_email }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="email_subject">Assunto</Label>
+                        <Input id="email_subject" v-model="sendForm.email_subject" />
+                        <p v-if="sendForm.errors.email_subject" class="text-sm text-destructive">{{ sendForm.errors.email_subject }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="email_body">Mensagem</Label>
+                        <textarea
+                            id="email_body"
+                            v-model="sendForm.email_body"
+                            rows="9"
+                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        />
+                        <p v-if="sendForm.errors.email_body" class="text-sm text-destructive">{{ sendForm.errors.email_body }}</p>
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <Button type="button" variant="outline" @click="closeSendModal">Cancelar</Button>
+                        <Button type="submit" :disabled="sendForm.processing">
+                            <Mail class="size-4" />
+                            Enviar
+                        </Button>
+                    </div>
+                </form>
             </div>
         </div>
     </AppLayout>

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\CalendarEvent;
 use App\Models\Deal;
+use App\Models\DealProposal;
 use App\Models\DealStage;
 use App\Models\Entity;
 use App\Models\Person;
@@ -11,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -142,5 +144,20 @@ class DatabaseSeeder extends Seeder
                     'reminder_at' => $attributes['status'] === CalendarEvent::STATUS_PENDING ? $startAt->copy()->subHour() : null,
                 ]);
         });
+
+        $proposalDeal = $deals->firstWhere('title', 'CRM rollout') ?? $deals->first();
+        $proposalPath = 'deal-proposals/demo-proposal.txt';
+        Storage::disk('local')->put($proposalPath, 'Proposta comercial demo FlowCRM.');
+
+        DealProposal::create([
+            'tenant_id' => $tenant->id,
+            'deal_id' => $proposalDeal->id,
+            'uploaded_by' => $user->id,
+            'original_name' => 'proposta-demo.txt',
+            'path' => $proposalPath,
+            'mime_type' => 'text/plain',
+            'size' => strlen('Proposta comercial demo FlowCRM.'),
+            'status' => DealProposal::STATUS_DRAFT,
+        ]);
     }
 }

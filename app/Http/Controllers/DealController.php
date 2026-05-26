@@ -6,6 +6,7 @@ use App\Http\Requests\MoveDealStageRequest;
 use App\Http\Requests\StoreDealRequest;
 use App\Http\Requests\UpdateDealRequest;
 use App\Models\Deal;
+use App\Models\DealProposal;
 use App\Models\DealStage;
 use App\Models\Entity;
 use App\Models\Person;
@@ -136,6 +137,9 @@ class DealController extends Controller
             'person:id,entity_id,name,email,phone,position,status',
             'owner:id,name,email',
             'stage:id,name,slug,color,is_won,is_lost',
+            'proposals' => fn ($query) => $query
+                ->latest()
+                ->with(['uploader:id,name', 'sender:id,name']),
             'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,eventable_type,eventable_id,title,type,status,start_at,end_at,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query
                 ->latest()
@@ -150,6 +154,20 @@ class DealController extends Controller
                 'last_activity_at' => $deal->last_activity_at?->toDateTimeString(),
                 'created_at' => $deal->created_at?->toDateTimeString(),
                 'updated_at' => $deal->updated_at?->toDateTimeString(),
+                'proposals' => $deal->proposals->map(fn (DealProposal $proposal) => [
+                    'id' => $proposal->id,
+                    'original_name' => $proposal->original_name,
+                    'mime_type' => $proposal->mime_type,
+                    'size' => $proposal->size,
+                    'status' => $proposal->status,
+                    'created_at' => $proposal->created_at?->toDateTimeString(),
+                    'sent_at' => $proposal->sent_at?->toDateTimeString(),
+                    'recipient_email' => $proposal->recipient_email,
+                    'email_subject' => $proposal->email_subject,
+                    'uploader' => $proposal->uploader?->only(['id', 'name']),
+                    'sender' => $proposal->sender?->only(['id', 'name']),
+                    'download_url' => route('deals.proposals.download', [$deal, $proposal]),
+                ]),
                 'calendar_events' => $deal->calendarEvents->map(fn ($event) => [
                     'id' => $event->id,
                     'title' => $event->title,
@@ -171,6 +189,7 @@ class DealController extends Controller
             'can' => [
                 'update' => request()->user()->can('update', $deal),
                 'delete' => request()->user()->can('delete', $deal),
+                'manageProposals' => request()->user()->can('create', [DealProposal::class, $deal]),
             ],
         ]);
     }

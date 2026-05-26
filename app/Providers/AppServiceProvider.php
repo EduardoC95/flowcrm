@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Models\CalendarEvent;
 use App\Models\Deal;
+use App\Models\DealProposal;
 use App\Models\Entity;
 use App\Models\Person;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Policies\CalendarEventPolicy;
 use App\Policies\DealPolicy;
+use App\Policies\DealProposalPolicy;
 use App\Policies\EntityPolicy;
 use App\Policies\PersonPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -33,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Entity::class, EntityPolicy::class);
         Gate::policy(Person::class, PersonPolicy::class);
         Gate::policy(Deal::class, DealPolicy::class);
+        Gate::policy(DealProposal::class, DealProposalPolicy::class);
         Gate::policy(CalendarEvent::class, CalendarEventPolicy::class);
 
         Gate::define('access-crm', fn (User $user): bool => $user->current_tenant_id !== null

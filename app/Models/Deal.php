@@ -83,6 +83,16 @@ class Deal extends Model
         return $this->hasMany(CalendarEvent::class);
     }
 
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(DealProposal::class);
+    }
+
+    public function latestProposal(): HasMany
+    {
+        return $this->hasMany(DealProposal::class)->latestOfMany();
+    }
+
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(ActivityLog::class, 'subject');
