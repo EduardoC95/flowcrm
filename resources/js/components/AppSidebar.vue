@@ -4,7 +4,7 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { BriefcaseBusiness, Building2, CalendarDays, KanbanSquare, LayoutGrid, UsersRound } from 'lucide-vue-next';
+import { BarChart3, BriefcaseBusiness, Building2, CalendarDays, KanbanSquare, LayoutGrid, Package, UsersRound } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -37,6 +37,16 @@ const mainNavItems: NavItem[] = [
         title: 'Pipeline',
         url: '/deals-board',
         icon: KanbanSquare,
+    },
+    {
+        title: 'Produtos',
+        url: '/products',
+        icon: Package,
+    },
+    {
+        title: 'EstatÃ­sticas de Produtos',
+        url: '/product-stats',
+        icon: BarChart3,
     },
 ];
 

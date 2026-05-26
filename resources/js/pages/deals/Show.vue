@@ -78,6 +78,21 @@ interface DealFollowUpEmail {
     sender: Option | null;
 }
 
+interface ProductOption {
+    id: number;
+    name: string;
+    sku: string | null;
+    unit_price: number;
+}
+
+interface DealProduct {
+    id: number;
+    quantity: number;
+    unit_price: number;
+    total: number;
+    product: ProductOption | null;
+}
+
 const props = defineProps<{
     deal: {
         id: number;
@@ -90,10 +105,12 @@ const props = defineProps<{
         last_activity_at: string | null;
         created_at: string | null;
         updated_at: string | null;
+        products_total: number;
         entity: Option | null;
         person: Option | null;
         owner: Option | null;
         stage: Stage | null;
+        deal_products: DealProduct[];
         proposals: DealProposal[];
         follow_up: DealFollowUp | null;
         follow_up_emails: DealFollowUpEmail[];
@@ -105,7 +122,9 @@ const props = defineProps<{
         delete: boolean;
         manageProposals: boolean;
         manageFollowUp: boolean;
+        manageProducts: boolean;
     };
+    productOptions: ProductOption[];
 }>();
 
 const page = usePage<SharedData>();
@@ -134,6 +153,18 @@ const sendForm = useForm({
     recipient_email: '',
     email_subject: '',
     email_body: '',
+});
+
+const productForm = useForm({
+    product_id: '',
+    quantity: '1',
+    unit_price: '',
+});
+
+const editingProductId = ref<number | null>(null);
+const productEditForm = useForm({
+    quantity: '1',
+    unit_price: '0',
 });
 
 const latestProposal = computed(() => props.deal.proposals[0] ?? null);
@@ -240,6 +271,37 @@ const cancelFollowUp = () => {
 const markClientReplied = () => {
     if (confirm('Marcar este follow-up como respondido pelo cliente?')) {
         router.patch(`/deals/${props.deal.id}/follow-up/client-replied`, {}, { preserveScroll: true });
+    }
+};
+
+const addProduct = () => {
+    productForm.post(`/deals/${props.deal.id}/products`, {
+        preserveScroll: true,
+        onSuccess: () => productForm.reset(),
+    });
+};
+
+const startEditingProduct = (dealProduct: DealProduct) => {
+    editingProductId.value = dealProduct.id;
+    productEditForm.quantity = String(dealProduct.quantity);
+    productEditForm.unit_price = String(dealProduct.unit_price);
+    productEditForm.clearErrors();
+};
+
+const updateProduct = (dealProduct: DealProduct) => {
+    productEditForm.patch(`/deals/${props.deal.id}/products/${dealProduct.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            editingProductId.value = null;
+        },
+    });
+};
+
+const removeProduct = (dealProduct: DealProduct) => {
+    if (confirm(`Remover "${dealProduct.product?.name ?? 'produto'}" deste negócio?`)) {
+        router.delete(`/deals/${props.deal.id}/products/${dealProduct.id}`, {
+            preserveScroll: true,
+        });
     }
 };
 </script>
@@ -453,6 +515,103 @@ const markClientReplied = () => {
                     </section>
                 </aside>
             </div>
+
+            <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="font-medium">Produtos do negócio</h2>
+                        <p class="text-sm text-muted-foreground">Total em produtos: {{ money(deal.products_total) }}</p>
+                    </div>
+                </div>
+
+                <form
+                    v-if="can.manageProducts"
+                    class="mt-4 grid gap-3 rounded-md border p-3 md:grid-cols-[1fr_120px_150px_auto]"
+                    @submit.prevent="addProduct"
+                >
+                    <select v-model="productForm.product_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                        <option value="">Selecionar produto</option>
+                        <option v-for="product in productOptions" :key="product.id" :value="product.id">
+                            {{ product.name }}{{ product.sku ? ` · ${product.sku}` : '' }}
+                        </option>
+                    </select>
+                    <Input v-model="productForm.quantity" type="number" min="0.01" step="0.01" placeholder="Qtd." />
+                    <Input v-model="productForm.unit_price" type="number" min="0" step="0.01" placeholder="Preço" />
+                    <Button type="submit" :disabled="productForm.processing">Adicionar produto</Button>
+                    <p v-if="productForm.errors.product_id" class="text-sm text-destructive md:col-span-4">{{ productForm.errors.product_id }}</p>
+                    <p v-if="productForm.errors.quantity" class="text-sm text-destructive md:col-span-4">{{ productForm.errors.quantity }}</p>
+                    <p v-if="productForm.errors.unit_price" class="text-sm text-destructive md:col-span-4">{{ productForm.errors.unit_price }}</p>
+                </form>
+
+                <div class="mt-4 overflow-x-auto">
+                    <table v-if="deal.deal_products.length" class="w-full text-sm">
+                        <thead class="border-b bg-muted/40 text-left text-muted-foreground">
+                            <tr>
+                                <th class="px-4 py-3 font-medium">Produto</th>
+                                <th class="px-4 py-3 font-medium">SKU</th>
+                                <th class="px-4 py-3 font-medium">Quantidade</th>
+                                <th class="px-4 py-3 font-medium">Preço unitário</th>
+                                <th class="px-4 py-3 font-medium">Total</th>
+                                <th class="px-4 py-3 text-right font-medium">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="dealProduct in deal.deal_products" :key="dealProduct.id" class="border-b last:border-0">
+                                <td class="px-4 py-3">
+                                    <Link
+                                        v-if="dealProduct.product"
+                                        :href="`/products/${dealProduct.product.id}`"
+                                        class="font-medium text-primary hover:underline"
+                                    >
+                                        {{ dealProduct.product.name }}
+                                    </Link>
+                                </td>
+                                <td class="px-4 py-3 text-muted-foreground">{{ dealProduct.product?.sku ?? '-' }}</td>
+                                <td class="px-4 py-3">
+                                    <Input
+                                        v-if="editingProductId === dealProduct.id"
+                                        v-model="productEditForm.quantity"
+                                        type="number"
+                                        min="0.01"
+                                        step="0.01"
+                                        class="w-28"
+                                    />
+                                    <span v-else>{{ dealProduct.quantity }}</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <Input
+                                        v-if="editingProductId === dealProduct.id"
+                                        v-model="productEditForm.unit_price"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        class="w-32"
+                                    />
+                                    <span v-else>{{ money(dealProduct.unit_price) }}</span>
+                                </td>
+                                <td class="px-4 py-3 font-medium">{{ money(dealProduct.total) }}</td>
+                                <td class="px-4 py-3">
+                                    <div v-if="can.manageProducts" class="flex justify-end gap-1">
+                                        <Button
+                                            v-if="editingProductId === dealProduct.id"
+                                            variant="outline"
+                                            size="sm"
+                                            @click="updateProduct(dealProduct)"
+                                        >
+                                            Guardar
+                                        </Button>
+                                        <Button v-else variant="ghost" size="sm" @click="startEditingProduct(dealProduct)">Editar</Button>
+                                        <Button variant="ghost" size="sm" @click="removeProduct(dealProduct)">Remover</Button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p v-else class="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                        Ainda não há produtos associados a este negócio.
+                    </p>
+                </div>
+            </section>
 
             <div class="grid gap-4 xl:grid-cols-3">
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">

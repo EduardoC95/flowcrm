@@ -8,9 +8,11 @@ use App\Models\DealFollowUp;
 use App\Models\DealFollowUpEmail;
 use App\Models\DealProposal;
 use App\Models\DealStage;
+use App\Models\DealProduct;
 use App\Models\Entity;
 use App\Models\FollowUpTemplate;
 use App\Models\Person;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -124,6 +126,40 @@ class DatabaseSeeder extends Seeder
                 'priority' => $attributes['priority'],
                 'description' => 'Negócio demo para validar pipeline, filtros e histórico comercial.',
             ]);
+        });
+
+        $products = collect([
+            ['name' => 'Licença FlowCRM Core', 'sku' => 'FLOW-CORE', 'unit_price' => 1200],
+            ['name' => 'Automação Comercial', 'sku' => 'AUTO-SALES', 'unit_price' => 2400],
+            ['name' => 'Onboarding Premium', 'sku' => 'ONB-PREM', 'unit_price' => 1800],
+            ['name' => 'Integração ERP', 'sku' => 'INT-ERP', 'unit_price' => 3500],
+            ['name' => 'Pack AI Comercial', 'sku' => 'AI-SALES', 'unit_price' => 2100],
+            ['name' => 'Suporte Mensal', 'sku' => 'SUP-MONTH', 'unit_price' => 450],
+        ])->map(fn (array $attributes) => Product::create([
+            ...$attributes,
+            'tenant_id' => $tenant->id,
+            'description' => 'Produto demo para análise de presença e valor nos negócios.',
+            'active' => true,
+        ]));
+
+        $deals->values()->each(function (Deal $deal, int $dealIndex) use ($products, $tenant) {
+            $products->take(3)->each(function (Product $product, int $productIndex) use ($deal, $dealIndex, $tenant) {
+                if (($dealIndex + $productIndex) % 2 !== 0) {
+                    return;
+                }
+
+                $quantity = $productIndex + 1;
+                $unitPrice = (float) $product->unit_price;
+
+                DealProduct::create([
+                    'tenant_id' => $tenant->id,
+                    'deal_id' => $deal->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total' => round($quantity * $unitPrice, 2),
+                ]);
+            });
         });
 
         collect([

@@ -7,10 +7,12 @@ use App\Http\Requests\StoreDealRequest;
 use App\Http\Requests\UpdateDealRequest;
 use App\Models\Deal;
 use App\Models\DealFollowUpEmail;
+use App\Models\DealProduct;
 use App\Models\DealProposal;
 use App\Models\DealStage;
 use App\Models\Entity;
 use App\Models\Person;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -139,6 +141,9 @@ class DealController extends Controller
             'person:id,entity_id,name,email,phone,position,status',
             'owner:id,name,email',
             'stage:id,name,slug,color,is_won,is_lost',
+            'dealProducts' => fn ($query) => $query
+                ->latest()
+                ->with('product:id,name,sku,unit_price,active'),
             'proposals' => fn ($query) => $query
                 ->latest()
                 ->with(['uploader:id,name', 'sender:id,name']),
@@ -160,6 +165,19 @@ class DealController extends Controller
                 'last_activity_at' => $deal->last_activity_at?->toDateTimeString(),
                 'created_at' => $deal->created_at?->toDateTimeString(),
                 'updated_at' => $deal->updated_at?->toDateTimeString(),
+                'products_total' => $deal->products_total,
+                'deal_products' => $deal->dealProducts->map(fn (DealProduct $dealProduct) => [
+                    'id' => $dealProduct->id,
+                    'quantity' => (float) $dealProduct->quantity,
+                    'unit_price' => (float) $dealProduct->unit_price,
+                    'total' => (float) $dealProduct->total,
+                    'product' => $dealProduct->product ? [
+                        'id' => $dealProduct->product->id,
+                        'name' => $dealProduct->product->name,
+                        'sku' => $dealProduct->product->sku,
+                        'unit_price' => (float) $dealProduct->product->unit_price,
+                    ] : null,
+                ]),
                 'proposals' => $deal->proposals->map(fn (DealProposal $proposal) => [
                     'id' => $proposal->id,
                     'original_name' => $proposal->original_name,
@@ -215,7 +233,18 @@ class DealController extends Controller
                 'delete' => request()->user()->can('delete', $deal),
                 'manageProposals' => request()->user()->can('create', [DealProposal::class, $deal]),
                 'manageFollowUp' => request()->user()->can('update', $deal),
+                'manageProducts' => request()->user()->can('update', $deal),
             ],
+            'productOptions' => Product::query()
+                ->where('active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'sku', 'unit_price'])
+                ->map(fn (Product $product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'unit_price' => (float) $product->unit_price,
+                ]),
         ]);
     }
 

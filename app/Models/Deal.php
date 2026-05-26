@@ -8,6 +8,7 @@ use Database\Factories\DealFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -109,6 +110,27 @@ class Deal extends Model
     public function followUpEmails(): HasMany
     {
         return $this->hasMany(DealFollowUpEmail::class);
+    }
+
+    public function dealProducts(): HasMany
+    {
+        return $this->hasMany(DealProduct::class);
+    }
+
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'deal_products')
+            ->withPivot(['tenant_id', 'quantity', 'unit_price', 'total'])
+            ->withTimestamps();
+    }
+
+    public function getProductsTotalAttribute(): float
+    {
+        if ($this->relationLoaded('dealProducts')) {
+            return (float) $this->dealProducts->sum('total');
+        }
+
+        return (float) $this->dealProducts()->sum('total');
     }
 
     public function activityLogs(): MorphMany
