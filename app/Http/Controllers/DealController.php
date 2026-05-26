@@ -6,6 +6,7 @@ use App\Http\Requests\MoveDealStageRequest;
 use App\Http\Requests\StoreDealRequest;
 use App\Http\Requests\UpdateDealRequest;
 use App\Models\Deal;
+use App\Models\DealFollowUpEmail;
 use App\Models\DealProposal;
 use App\Models\DealStage;
 use App\Models\Entity;
@@ -13,6 +14,7 @@ use App\Models\Person;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\FollowUpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -140,6 +142,10 @@ class DealController extends Controller
             'proposals' => fn ($query) => $query
                 ->latest()
                 ->with(['uploader:id,name', 'sender:id,name']),
+            'activeFollowUp',
+            'followUpEmails' => fn ($query) => $query
+                ->latest('sent_at')
+                ->with(['template:id,name', 'sender:id,name']),
             'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,eventable_type,eventable_id,title,type,status,start_at,end_at,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query
                 ->latest()
@@ -168,6 +174,24 @@ class DealController extends Controller
                     'sender' => $proposal->sender?->only(['id', 'name']),
                     'download_url' => route('deals.proposals.download', [$deal, $proposal]),
                 ]),
+                'follow_up' => $deal->activeFollowUp ? [
+                    'id' => $deal->activeFollowUp->id,
+                    'status' => $deal->activeFollowUp->status,
+                    'next_send_at' => $deal->activeFollowUp->next_send_at?->toDateTimeString(),
+                    'last_sent_at' => $deal->activeFollowUp->last_sent_at?->toDateTimeString(),
+                    'sent_count' => $deal->activeFollowUp->sent_count,
+                    'cancelled_at' => $deal->activeFollowUp->cancelled_at?->toDateTimeString(),
+                    'replied_at' => $deal->activeFollowUp->replied_at?->toDateTimeString(),
+                ] : null,
+                'follow_up_emails' => $deal->followUpEmails->map(fn (DealFollowUpEmail $email) => [
+                    'id' => $email->id,
+                    'recipient_email' => $email->recipient_email,
+                    'subject' => $email->subject,
+                    'body' => $email->body,
+                    'sent_at' => $email->sent_at?->toDateTimeString(),
+                    'template' => $email->template?->only(['id', 'name']),
+                    'sender' => $email->sender?->only(['id', 'name']),
+                ]),
                 'calendar_events' => $deal->calendarEvents->map(fn ($event) => [
                     'id' => $event->id,
                     'title' => $event->title,
@@ -190,6 +214,7 @@ class DealController extends Controller
                 'update' => request()->user()->can('update', $deal),
                 'delete' => request()->user()->can('delete', $deal),
                 'manageProposals' => request()->user()->can('create', [DealProposal::class, $deal]),
+                'manageFollowUp' => request()->user()->can('update', $deal),
             ],
         ]);
     }
@@ -237,7 +262,12 @@ class DealController extends Controller
             ->with('success', 'Negócio apagado com sucesso.');
     }
 
-    public function moveStage(MoveDealStageRequest $request, Deal $deal, ActivityLogger $logger): JsonResponse|RedirectResponse
+    public function moveStage(
+        MoveDealStageRequest $request,
+        Deal $deal,
+        ActivityLogger $logger,
+        FollowUpService $followUpService,
+    ): JsonResponse|RedirectResponse
     {
         $previousStage = $deal->stage()->first();
         $newStage = DealStage::findOrFail($request->validated('deal_stage_id'));
@@ -264,7 +294,12 @@ class DealController extends Controller
             ],
         );
 
-        $this->syncFollowUpAutomation($deal, $previousStage, $newStage);
+        $followUpMessage = $this->syncFollowUpAutomation($deal, $previousStage, $newStage, $followUpService, $request->user());
+        $message = trim('Negócio movido com sucesso. '.($followUpMessage ?? ''));
+
+        if ($followUpMessage && ! $request->expectsJson()) {
+            return back()->with('success', $message);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -325,7 +360,7 @@ class DealController extends Controller
     private function dealQuery(array $filters)
     {
         return Deal::query()
-            ->with(['entity:id,name', 'person:id,name', 'owner:id,name', 'stage:id,name,slug,color,is_won,is_lost'])
+            ->with(['entity:id,name', 'person:id,name', 'owner:id,name', 'stage:id,name,slug,color,is_won,is_lost', 'activeFollowUp'])
             ->when($filters['search'] ?? null, fn ($query, string $search) => $query->where('title', 'like', "%{$search}%"))
             ->when($filters['stage_id'] ?? null, fn ($query, int $stageId) => $query->where('deal_stage_id', $stageId))
             ->when($filters['entity_id'] ?? null, fn ($query, int $entityId) => $query->where('entity_id', $entityId))
@@ -343,6 +378,9 @@ class DealController extends Controller
     private function dealRow(Deal $deal): array
     {
         $stage = $deal->relationLoaded('stage') ? $deal->getRelation('stage') : $deal->stage()->first();
+        $activeFollowUp = $deal->relationLoaded('activeFollowUp')
+            ? $deal->getRelation('activeFollowUp')
+            : $deal->activeFollowUp()->first();
 
         return [
             'id' => $deal->id,
@@ -361,6 +399,12 @@ class DealController extends Controller
                 'color' => $stage->color,
                 'is_won' => $stage->is_won,
                 'is_lost' => $stage->is_lost,
+            ] : null,
+            'active_follow_up' => $activeFollowUp ? [
+                'id' => $activeFollowUp->id,
+                'next_send_at' => $activeFollowUp->next_send_at?->toDateTimeString(),
+                'last_sent_at' => $activeFollowUp->last_sent_at?->toDateTimeString(),
+                'sent_count' => $activeFollowUp->sent_count,
             ] : null,
         ];
     }
@@ -451,14 +495,26 @@ class DealController extends Controller
         }
     }
 
-    private function syncFollowUpAutomation(Deal $deal, ?DealStage $previousStage, DealStage $newStage): void
+    private function syncFollowUpAutomation(
+        Deal $deal,
+        ?DealStage $previousStage,
+        DealStage $newStage,
+        FollowUpService $followUpService,
+        ?User $user,
+    ): ?string
     {
         if ($newStage->slug === DealStage::SLUG_FOLLOW_UP && $previousStage?->slug !== DealStage::SLUG_FOLLOW_UP) {
-            // Future hook: app(FollowUpService::class)->scheduleForDeal($deal);
+            $followUpService->startForDeal($deal->fresh(['stage']), $user);
+
+            return 'Follow-up automático iniciado.';
         }
 
         if ($previousStage?->slug === DealStage::SLUG_FOLLOW_UP && $newStage->slug !== DealStage::SLUG_FOLLOW_UP) {
-            // Future hook: app(FollowUpService::class)->cancelForDeal($deal);
+            $followUpService->cancelForDeal($deal, 'Negócio saiu do estado Follow Up', $user);
+
+            return 'Follow-up automático cancelado.';
         }
+
+        return null;
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -91,6 +92,23 @@ class Deal extends Model
     public function latestProposal(): HasMany
     {
         return $this->hasMany(DealProposal::class)->latestOfMany();
+    }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(DealFollowUp::class);
+    }
+
+    public function activeFollowUp(): HasOne
+    {
+        return $this->hasOne(DealFollowUp::class)
+            ->where('status', DealFollowUp::STATUS_ACTIVE)
+            ->latestOfMany();
+    }
+
+    public function followUpEmails(): HasMany
+    {
+        return $this->hasMany(DealFollowUpEmail::class);
     }
 
     public function activityLogs(): MorphMany

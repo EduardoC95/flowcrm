@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Download, Mail, Paperclip, Pencil, Trash2, X } from 'lucide-vue-next';
+import { ArrowLeft, Bell, CheckCircle2, Download, Mail, Paperclip, Pencil, Trash2, X } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 interface Option {
@@ -58,6 +58,26 @@ interface DealProposal {
     download_url: string;
 }
 
+interface DealFollowUp {
+    id: number;
+    status: string;
+    next_send_at: string | null;
+    last_sent_at: string | null;
+    sent_count: number;
+    cancelled_at: string | null;
+    replied_at: string | null;
+}
+
+interface DealFollowUpEmail {
+    id: number;
+    recipient_email: string;
+    subject: string;
+    body: string;
+    sent_at: string | null;
+    template: Option | null;
+    sender: Option | null;
+}
+
 const props = defineProps<{
     deal: {
         id: number;
@@ -75,6 +95,8 @@ const props = defineProps<{
         owner: Option | null;
         stage: Stage | null;
         proposals: DealProposal[];
+        follow_up: DealFollowUp | null;
+        follow_up_emails: DealFollowUpEmail[];
         calendar_events: CalendarEvent[];
         activity_logs: ActivityLog[];
     };
@@ -82,6 +104,7 @@ const props = defineProps<{
         update: boolean;
         delete: boolean;
         manageProposals: boolean;
+        manageFollowUp: boolean;
     };
 }>();
 
@@ -101,6 +124,7 @@ const priorityLabels: Record<string, string> = {
 const showSendModal = ref(false);
 const selectedProposal = ref<DealProposal | null>(null);
 const previewLoading = ref(false);
+const expandedFollowUpEmailId = ref<number | null>(null);
 
 const uploadForm = useForm<{ proposal: File | null }>({
     proposal: null,
@@ -201,6 +225,22 @@ const sendProposal = () => {
         preserveScroll: true,
         onSuccess: closeSendModal,
     });
+};
+
+const cancelFollowUp = () => {
+    if (confirm('Cancelar o follow-up automático deste negócio?')) {
+        router.patch(
+            `/deals/${props.deal.id}/follow-up/cancel`,
+            { cancellation_reason: 'Cancelado manualmente pelo utilizador' },
+            { preserveScroll: true },
+        );
+    }
+};
+
+const markClientReplied = () => {
+    if (confirm('Marcar este follow-up como respondido pelo cliente?')) {
+        router.patch(`/deals/${props.deal.id}/follow-up/client-replied`, {}, { preserveScroll: true });
+    }
 };
 </script>
 
@@ -362,6 +402,55 @@ const sendProposal = () => {
                             </form>
                         </div>
                     </section>
+
+                    <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="font-medium">Follow-up automÃ¡tico</h2>
+                            <span
+                                v-if="deal.follow_up"
+                                class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700"
+                            >
+                                Ativo
+                            </span>
+                        </div>
+
+                        <div v-if="!deal.follow_up" class="mt-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                            Este negÃ³cio ainda nÃ£o tem follow-up automÃ¡tico ativo.
+                            <span v-if="deal.stage?.slug === 'follow-up'">
+                                Move novamente o cartÃ£o para Follow Up se precisares de reiniciar o ciclo.</span
+                            >
+                        </div>
+
+                        <div v-else class="mt-4 space-y-4 text-sm">
+                            <div class="grid gap-3 rounded-md border p-3">
+                                <div>
+                                    <p class="text-muted-foreground">PrÃ³ximo envio</p>
+                                    <p class="font-medium">{{ deal.follow_up.next_send_at ?? '-' }}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <p class="text-muted-foreground">Ãšltimo envio</p>
+                                        <p>{{ deal.follow_up.last_sent_at ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-muted-foreground">Emails enviados</p>
+                                        <p>{{ deal.follow_up.sent_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="can.manageFollowUp" class="flex flex-wrap gap-2">
+                                <Button variant="outline" size="sm" @click="markClientReplied">
+                                    <CheckCircle2 class="size-4" />
+                                    Marcar como cliente respondeu
+                                </Button>
+                                <Button variant="outline" size="sm" @click="cancelFollowUp">
+                                    <X class="size-4" />
+                                    Cancelar follow-up
+                                </Button>
+                            </div>
+                        </div>
+                    </section>
                 </aside>
             </div>
 
@@ -380,6 +469,30 @@ const sendProposal = () => {
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <h2 class="font-medium">Histórico/Logs</h2>
                     <div class="mt-4 space-y-3">
+                        <div v-for="email in deal.follow_up_emails" :key="`follow-up-email-${email.id}`" class="rounded-md border p-3 text-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-medium">Email de follow-up enviado</p>
+                                    <p class="text-muted-foreground">{{ email.sent_at ?? '-' }} Â· {{ email.recipient_email }}</p>
+                                    <p class="text-muted-foreground">{{ email.subject }}</p>
+                                    <p v-if="email.template" class="text-xs text-muted-foreground">Template: {{ email.template.name }}</p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    @click="expandedFollowUpEmailId = expandedFollowUpEmailId === email.id ? null : email.id"
+                                >
+                                    <Bell class="size-4" />
+                                </Button>
+                            </div>
+                            <p
+                                v-if="expandedFollowUpEmailId === email.id"
+                                class="mt-3 whitespace-pre-line rounded-md bg-muted p-3 text-muted-foreground"
+                            >
+                                {{ email.body }}
+                            </p>
+                        </div>
                         <div v-for="proposal in sentProposals" :key="`sent-${proposal.id}`" class="rounded-md border p-3 text-sm">
                             <p class="font-medium">Proposta enviada</p>
                             <p class="text-muted-foreground">{{ proposal.sent_at ?? '-' }} · {{ proposal.sender?.name ?? '-' }}</p>

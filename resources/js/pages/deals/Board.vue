@@ -22,6 +22,12 @@ interface DealCard {
     entity: Option | null;
     person: Option | null;
     owner: Option | null;
+    active_follow_up: {
+        id: number;
+        next_send_at: string | null;
+        last_sent_at: string | null;
+        sent_count: number;
+    } | null;
 }
 
 interface StageColumn {
@@ -143,7 +149,7 @@ const dropOnStage = (stage: StageColumn) => {
                 v-if="page.props.flash.success || flash"
                 class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
             >
-                {{ flash || page.props.flash.success }}
+                {{ page.props.flash.success || flash }}
             </div>
 
             <section class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -223,6 +229,12 @@ const dropOnStage = (stage: StageColumn) => {
                                 <div>Responsável: {{ deal.owner?.name ?? '-' }}</div>
                                 <div>Fecho: {{ deal.expected_close_date ?? '-' }}</div>
                                 <div>Prioridade: {{ deal.priority ? priorityLabels[deal.priority] : '-' }}</div>
+                                <div
+                                    v-if="deal.active_follow_up"
+                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700"
+                                >
+                                    Follow-up: {{ deal.active_follow_up.next_send_at ?? 'ativo' }}
+                                </div>
                             </div>
                         </article>
 

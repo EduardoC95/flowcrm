@@ -33,6 +33,12 @@ interface DealRow {
     person: Option | null;
     owner: Option | null;
     stage: StageOption | null;
+    active_follow_up: {
+        id: number;
+        next_send_at: string | null;
+        last_sent_at: string | null;
+        sent_count: number;
+    } | null;
 }
 
 interface PaginationLink {
@@ -246,6 +252,12 @@ const destroy = (deal: DealRow) => {
                                         :class="priorityClass(deal.priority)"
                                     >
                                         {{ deal.priority ? priorityLabels[deal.priority] : 'Sem prioridade' }}
+                                    </span>
+                                    <span
+                                        v-if="deal.active_follow_up"
+                                        class="ml-2 mt-1 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700"
+                                    >
+                                        Follow-up: {{ deal.active_follow_up.next_send_at ?? 'ativo' }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">

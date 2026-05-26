@@ -4,9 +4,12 @@ namespace Database\Seeders;
 
 use App\Models\CalendarEvent;
 use App\Models\Deal;
+use App\Models\DealFollowUp;
+use App\Models\DealFollowUpEmail;
 use App\Models\DealProposal;
 use App\Models\DealStage;
 use App\Models\Entity;
+use App\Models\FollowUpTemplate;
 use App\Models\Person;
 use App\Models\Tenant;
 use App\Models\User;
@@ -41,6 +44,24 @@ class DatabaseSeeder extends Seeder
         ]);
 
         DealStage::ensureDefaultStages($tenant);
+
+        $followUpTemplates = collect([
+            ['name' => 'Follow-up 01', 'subject' => 'Acompanhamento da proposta - {deal_title}', 'body' => "Olá {client_name},\n\nQueria saber se teve oportunidade de analisar a proposta relativa a {deal_title}.\n\nPosso ajudar com alguma informação adicional?\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 02', 'subject' => 'Dúvidas sobre {deal_title}', 'body' => "Olá {client_name},\n\nFicou alguma dúvida sobre a proposta que enviámos para {company_name}?\n\nEstou disponível para esclarecer qualquer ponto.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 03', 'subject' => 'Podemos ajudar com a proposta?', 'body' => "Olá {client_name},\n\nPasso só para confirmar se precisa de ajuda com a proposta de {deal_title}.\n\nSe fizer sentido, posso alinhar os próximos passos consigo.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 04', 'subject' => 'Novidades sobre {deal_title}', 'body' => "Olá {client_name},\n\nTem alguma novidade sobre a proposta relativa a {deal_title}?\n\nFico totalmente disponível para ajudar no que for necessário.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 05', 'subject' => 'Acompanhamento comercial', 'body' => "Olá {client_name},\n\nEstou a acompanhar a proposta enviada e queria perceber se existe algum ponto que possamos ajustar.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 06', 'subject' => 'Próximo passo para {deal_title}', 'body' => "Olá {client_name},\n\nGostava de confirmar consigo qual será o melhor próximo passo relativamente a {deal_title}.\n\nPosso ajudar com mais contexto ou informação.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 07', 'subject' => 'Seguimento da nossa proposta', 'body' => "Olá {client_name},\n\nEspero que se encontre bem.\n\nQueria saber se a proposta enviada responde às necessidades de {company_name} ou se há algo que devamos rever.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 08', 'subject' => 'Disponível para esclarecer a proposta', 'body' => "Olá {client_name},\n\nDeixo uma nota rápida para dizer que estou disponível para esclarecer qualquer detalhe da proposta de {deal_title}.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 09', 'subject' => 'Atualização sobre a proposta', 'body' => "Olá {client_name},\n\nConseguiu avançar na análise da proposta?\n\nSe houver alguma questão em aberto, terei todo o gosto em ajudar.\n\nObrigado,\n{user_name}"],
+            ['name' => 'Follow-up 10', 'subject' => 'Fecho de próximos passos', 'body' => "Olá {client_name},\n\nQueria confirmar se ainda faz sentido avançarmos com os próximos passos para {deal_title}.\n\nFico atento ao seu feedback.\n\nObrigado,\n{user_name}"],
+        ])->map(fn (array $attributes, int $index) => FollowUpTemplate::create([
+            ...$attributes,
+            'tenant_id' => null,
+            'active' => true,
+            'position' => $index + 1,
+        ]));
 
         $entities = collect([
             ['name' => 'Acme Portugal', 'vat' => 'PT509999001', 'status' => Entity::STATUS_CLIENT, 'email' => 'hello@acme.test'],
@@ -159,5 +180,32 @@ class DatabaseSeeder extends Seeder
             'size' => strlen('Proposta comercial demo FlowCRM.'),
             'status' => DealProposal::STATUS_DRAFT,
         ]);
+
+        $followUpDeal = $deals->firstWhere('stage', DealStage::SLUG_FOLLOW_UP) ?? $deals->first();
+
+        if ($followUpDeal instanceof Deal) {
+            $followUp = DealFollowUp::create([
+                'tenant_id' => $tenant->id,
+                'deal_id' => $followUpDeal->id,
+                'status' => DealFollowUp::STATUS_ACTIVE,
+                'next_send_at' => now()->addDay()->setTime(10, 0),
+                'last_sent_at' => now()->subDay()->setTime(10, 0),
+                'sent_count' => 1,
+            ]);
+
+            $template = $followUpTemplates->first();
+
+            DealFollowUpEmail::create([
+                'tenant_id' => $tenant->id,
+                'deal_id' => $followUpDeal->id,
+                'deal_follow_up_id' => $followUp->id,
+                'follow_up_template_id' => $template?->id,
+                'sent_by' => $user->id,
+                'recipient_email' => $followUpDeal->person?->email ?? $followUpDeal->entity?->email ?? 'cliente@example.test',
+                'subject' => 'Acompanhamento da proposta - '.$followUpDeal->title,
+                'body' => "Olá,\n\nQueria saber se teve oportunidade de analisar a proposta.\n\nObrigado,\n{$user->name}",
+                'sent_at' => now()->subDay()->setTime(10, 0),
+            ]);
+        }
     }
 }

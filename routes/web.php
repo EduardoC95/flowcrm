@@ -4,6 +4,7 @@ use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\CrmModuleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealController;
+use App\Http\Controllers\DealFollowUpController;
 use App\Http\Controllers\DealProposalController;
 use App\Http\Controllers\EntityController;
 use App\Http\Controllers\PersonController;
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('calendar-events', CalendarEventController::class)->except(['index']);
         Route::get('deals-board', [DealController::class, 'board'])->name('deals.board');
         Route::patch('deals/{deal}/move-stage', [DealController::class, 'moveStage'])->name('deals.move-stage');
+        Route::patch('deals/{deal}/follow-up/cancel', [DealFollowUpController::class, 'cancel'])->name('deals.follow-up.cancel');
+        Route::patch('deals/{deal}/follow-up/client-replied', [DealFollowUpController::class, 'markClientReplied'])->name('deals.follow-up.client-replied');
         Route::post('deals/{deal}/proposals', [DealProposalController::class, 'store'])->name('deals.proposals.store');
         Route::get('deals/{deal}/proposals/{proposal}/preview-email', [DealProposalController::class, 'previewEmail'])->name('deals.proposals.preview-email');
         Route::post('deals/{deal}/proposals/{proposal}/send', [DealProposalController::class, 'send'])->name('deals.proposals.send');
