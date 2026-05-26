@@ -103,11 +103,44 @@ class DatabaseSeeder extends Seeder
             ]);
         });
 
-        $deal = $deals->firstWhere('title', 'CRM rollout');
+        collect([
+            ['type' => CalendarEvent::TYPE_MEETING, 'status' => CalendarEvent::STATUS_PENDING, 'title' => 'Discovery call', 'target' => 'deal', 'index' => 1, 'days' => 1, 'priority' => CalendarEvent::PRIORITY_HIGH, 'location' => 'Remote'],
+            ['type' => CalendarEvent::TYPE_CALL, 'status' => CalendarEvent::STATUS_PENDING, 'title' => 'Chamada de qualificação', 'target' => 'person', 'index' => 3, 'days' => 2, 'priority' => CalendarEvent::PRIORITY_MEDIUM, 'location' => 'Telefone'],
+            ['type' => CalendarEvent::TYPE_TASK, 'status' => CalendarEvent::STATUS_PENDING, 'title' => 'Preparar proposta comercial', 'target' => 'entity', 'index' => 1, 'days' => 3, 'priority' => CalendarEvent::PRIORITY_URGENT, 'location' => null],
+            ['type' => CalendarEvent::TYPE_NOTE, 'status' => CalendarEvent::STATUS_COMPLETED, 'title' => 'Nota de reunião com operações', 'target' => 'person', 'index' => 1, 'days' => -1, 'priority' => CalendarEvent::PRIORITY_LOW, 'location' => 'Lisboa'],
+            ['type' => CalendarEvent::TYPE_REMINDER, 'status' => CalendarEvent::STATUS_PENDING, 'title' => 'Follow-up pós-proposta', 'target' => 'deal', 'index' => 3, 'days' => 5, 'priority' => CalendarEvent::PRIORITY_HIGH, 'location' => null],
+            ['type' => CalendarEvent::TYPE_TASK, 'status' => CalendarEvent::STATUS_CANCELLED, 'title' => 'Tarefa cancelada de validação', 'target' => 'entity', 'index' => 4, 'days' => -2, 'priority' => CalendarEvent::PRIORITY_LOW, 'location' => null],
+        ])->each(function (array $attributes) use ($deals, $entities, $people, $tenant, $user) {
+            $target = match ($attributes['target']) {
+                'deal' => $deals->values()->get($attributes['index']),
+                'person' => $people->values()->get($attributes['index']),
+                default => $entities->values()->get($attributes['index']),
+            };
 
-        CalendarEvent::factory()->forDeal($deal)->create([
-            'title' => 'Discovery call',
-            'location' => 'Remote',
-        ]);
+            $startAt = now()->addDays($attributes['days'])->setTime(10, 0);
+
+            $factory = match (true) {
+                $target instanceof Deal => CalendarEvent::factory()->forDeal($target),
+                $target instanceof Person => CalendarEvent::factory()->forPerson($target),
+                default => CalendarEvent::factory()->forEntity($target),
+            };
+
+            $factory->ownedBy($user)
+                ->create([
+                    'tenant_id' => $tenant->id,
+                    'title' => $attributes['title'],
+                    'type' => $attributes['type'],
+                    'status' => $attributes['status'],
+                    'priority' => $attributes['priority'],
+                    'start_at' => $startAt,
+                    'end_at' => $startAt->copy()->addHour(),
+                    'starts_at' => $startAt,
+                    'ends_at' => $startAt->copy()->addHour(),
+                    'location' => $attributes['location'],
+                    'description' => 'Atividade demo para validar calendário, histórico e lembretes.',
+                    'notes' => 'Atividade demo para validar calendário, histórico e lembretes.',
+                    'reminder_at' => $attributes['status'] === CalendarEvent::STATUS_PENDING ? $startAt->copy()->subHour() : null,
+                ]);
+        });
     }
 }

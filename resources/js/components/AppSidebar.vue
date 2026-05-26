@@ -25,7 +25,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Calendário',
-        url: '/crm/calendar',
+        url: '/calendar',
         icon: CalendarDays,
     },
     {

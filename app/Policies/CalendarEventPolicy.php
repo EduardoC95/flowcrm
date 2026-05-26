@@ -32,6 +32,16 @@ class CalendarEventPolicy
 
     public function delete(User $user, CalendarEvent $calendarEvent): bool
     {
-        return $this->sameTenant($user, $calendarEvent) && $this->canDelete($user);
+        return $this->sameTenant($user, $calendarEvent) && $this->canWrite($user);
+    }
+
+    public function complete(User $user, CalendarEvent $calendarEvent): bool
+    {
+        return $this->sameTenant($user, $calendarEvent) && $this->canWrite($user);
+    }
+
+    public function cancel(User $user, CalendarEvent $calendarEvent): bool
+    {
+        return $this->sameTenant($user, $calendarEvent) && $this->canWrite($user);
     }
 }

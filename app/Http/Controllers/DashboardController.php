@@ -55,6 +55,31 @@ class DashboardController extends Controller
                     : null,
             ]);
 
+        $todayEvents = CalendarEvent::query()
+            ->whereDate('start_at', today())
+            ->count();
+
+        $pendingTasks = CalendarEvent::query()
+            ->where('type', CalendarEvent::TYPE_TASK)
+            ->where('status', CalendarEvent::STATUS_PENDING)
+            ->count();
+
+        $upcomingActivities = CalendarEvent::query()
+            ->with(['owner:id,name', 'eventable'])
+            ->where('status', CalendarEvent::STATUS_PENDING)
+            ->where('start_at', '>=', now()->startOfDay())
+            ->orderBy('start_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (CalendarEvent $event) => [
+                'id' => $event->id,
+                'title' => $event->title,
+                'type' => $event->type,
+                'start_at' => $event->start_at?->toDateTimeString(),
+                'owner' => $event->owner?->only(['id', 'name']),
+                'url' => route('calendar-events.show', $event),
+            ]);
+
         return Inertia::render('Dashboard', [
             'tenant' => $request->user()->currentTenant?->only(['id', 'name', 'slug']),
             'stats' => [
@@ -64,9 +89,12 @@ class DashboardController extends Controller
                 'deals' => Deal::count(),
                 'openDeals' => Deal::whereIn('deal_stage_id', $openStageIds)->count(),
                 'pipelineValue' => (float) $pipelineValue,
+                'todayEvents' => $todayEvents,
+                'pendingTasks' => $pendingTasks,
             ],
             'dealsByStage' => $dealsByStage,
             'upcomingDeals' => $upcomingDeals,
+            'upcomingActivities' => $upcomingActivities,
         ]);
     }
 }

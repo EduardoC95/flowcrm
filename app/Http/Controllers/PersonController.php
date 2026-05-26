@@ -114,7 +114,7 @@ class PersonController extends Controller
             'deals:id,tenant_id,entity_id,person_id,owner_id,deal_stage_id,title,stage,value,probability,expected_close_date,priority,created_at',
             'deals.stage:id,name,slug,color',
             'deals.owner:id,name',
-            'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,title,starts_at,ends_at,location',
+            'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,eventable_type,eventable_id,title,type,status,start_at,end_at,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query
                 ->latest()
                 ->limit(20)
@@ -211,6 +211,9 @@ class PersonController extends Controller
 
         Deal::where('person_id', $person->id)->update(['person_id' => $target->id]);
         CalendarEvent::where('person_id', $person->id)->update(['person_id' => $target->id]);
+        CalendarEvent::where('eventable_type', Person::class)
+            ->where('eventable_id', $person->id)
+            ->update(['eventable_id' => $target->id]);
 
         $person->delete();
 

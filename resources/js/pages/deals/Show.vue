@@ -33,6 +33,8 @@ interface ActivityLog {
 interface CalendarEvent {
     id: number;
     title: string;
+    type: string;
+    status: string;
     starts_at: string | null;
     ends_at: string | null;
     location: string | null;
@@ -192,7 +194,7 @@ const destroy = () => {
                     <h2 class="font-medium">Eventos/Atividades</h2>
                     <div class="mt-4 space-y-3">
                         <div v-for="event in deal.calendar_events" :key="event.id" class="rounded-md border p-3 text-sm">
-                            <p class="font-medium">{{ event.title }}</p>
+                            <Link :href="`/calendar-events/${event.id}`" class="font-medium text-primary hover:underline">{{ event.title }}</Link>
                             <p class="text-muted-foreground">{{ event.starts_at ?? '-' }} · {{ event.location ?? 'Sem localização' }}</p>
                         </div>
                         <p v-if="deal.calendar_events.length === 0" class="text-sm text-muted-foreground">Ainda não há eventos associados.</p>
@@ -216,7 +218,7 @@ const destroy = () => {
                     <div class="mt-4 space-y-3 text-sm text-muted-foreground">
                         <p>Última atividade: {{ deal.last_activity_at ?? '-' }}</p>
                         <Button as-child variant="outline" class="w-full justify-start">
-                            <Link href="/crm/calendar">Preparar evento</Link>
+                            <Link href="/calendar-events/create">Preparar evento</Link>
                         </Button>
                         <Button as-child variant="outline" class="w-full justify-start">
                             <Link href="/deals-board">Ver no pipeline</Link>

@@ -20,6 +20,8 @@ defineProps<{
         deals: number;
         openDeals: number;
         pipelineValue: number;
+        todayEvents: number;
+        pendingTasks: number;
     };
     dealsByStage: {
         id: number;
@@ -37,12 +39,20 @@ defineProps<{
         person: { id: number; name: string } | null;
         stage: { id: number; name: string; slug: string; color: string | null } | null;
     }[];
+    upcomingActivities: {
+        id: number;
+        title: string;
+        type: string;
+        start_at: string | null;
+        owner: { id: number; name: string } | null;
+        url: string;
+    }[];
 }>();
 
 const shortcuts = [
     { title: 'Entidades', href: '/entities', icon: Building2, description: 'Empresas, clientes e organizações.' },
     { title: 'Pessoas', href: '/people', icon: UsersRound, description: 'Contactos e decisores associados.' },
-    { title: 'Calendário', href: '/crm/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
+    { title: 'Calendário', href: '/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
 ];
 
@@ -134,6 +144,43 @@ const money = (value: number) =>
                             </div>
                         </Link>
                         <p v-if="upcomingDeals.length === 0" class="text-sm text-muted-foreground">Sem fechos previstos no pipeline aberto.</p>
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Eventos de hoje</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.todayEvents }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-muted-foreground">Tarefas pendentes</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.pendingTasks }}</p>
+                        </div>
+                    </div>
+                    <Link href="/calendar" class="mt-4 inline-flex text-sm text-primary hover:underline">Abrir calendário</Link>
+                </section>
+
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="font-medium">Próximas atividades</h2>
+                        <Link href="/calendar-events/create" class="text-sm text-primary hover:underline">Novo evento</Link>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <Link
+                            v-for="activity in upcomingActivities"
+                            :key="activity.id"
+                            :href="activity.url"
+                            class="block rounded-md border p-3 text-sm transition hover:border-primary/60"
+                        >
+                            <p class="font-medium text-foreground">{{ activity.title }}</p>
+                            <p class="text-muted-foreground">
+                                {{ activity.type }} · {{ activity.start_at ?? '-' }} · {{ activity.owner?.name ?? '-' }}
+                            </p>
+                        </Link>
+                        <p v-if="upcomingActivities.length === 0" class="text-sm text-muted-foreground">Sem atividades próximas.</p>
                     </div>
                 </section>
             </div>

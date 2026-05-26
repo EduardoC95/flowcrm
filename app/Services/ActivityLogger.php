@@ -42,8 +42,8 @@ class ActivityLogger
 
     public function forModel(Model $model, string $action): ActivityLog
     {
-        $module = Str::of(class_basename($model))->kebab()->plural()->toString();
-        $subject = Str::of(class_basename($model))->kebab()->toString();
+        $subject = Str::of(class_basename($model))->snake()->toString();
+        $module = Str::of($subject)->plural()->toString();
         $tenantId = $model->getAttribute('tenant_id');
 
         return $this->log(

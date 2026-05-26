@@ -100,7 +100,7 @@ class EntityController extends Controller
             'deals:id,tenant_id,entity_id,person_id,owner_id,deal_stage_id,title,stage,value,probability,expected_close_date,priority,created_at',
             'deals.stage:id,name,slug,color',
             'deals.owner:id,name',
-            'calendarEvents:id,tenant_id,entity_id,title,starts_at,ends_at,location',
+            'calendarEvents:id,tenant_id,entity_id,eventable_type,eventable_id,title,type,status,start_at,end_at,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query
                 ->latest()
                 ->limit(20)

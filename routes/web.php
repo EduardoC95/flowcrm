@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\CrmModuleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealController;
@@ -24,6 +25,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('entities', EntityController::class);
         Route::post('people/{person}/merge', [PersonController::class, 'merge'])->name('people.merge');
         Route::resource('people', PersonController::class);
+        Route::get('calendar', [CalendarEventController::class, 'index'])->name('calendar.index');
+        Route::get('calendar/feed', [CalendarEventController::class, 'calendarFeed'])->name('calendar.feed');
+        Route::patch('calendar-events/{calendarEvent}/complete', [CalendarEventController::class, 'complete'])->name('calendar-events.complete');
+        Route::patch('calendar-events/{calendarEvent}/cancel', [CalendarEventController::class, 'cancel'])->name('calendar-events.cancel');
+        Route::resource('calendar-events', CalendarEventController::class)->except(['index']);
         Route::get('deals-board', [DealController::class, 'board'])->name('deals.board');
         Route::patch('deals/{deal}/move-stage', [DealController::class, 'moveStage'])->name('deals.move-stage');
         Route::resource('deals', DealController::class);

@@ -136,7 +136,7 @@ class DealController extends Controller
             'person:id,entity_id,name,email,phone,position,status',
             'owner:id,name,email',
             'stage:id,name,slug,color,is_won,is_lost',
-            'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,title,starts_at,ends_at,location',
+            'calendarEvents:id,tenant_id,entity_id,person_id,deal_id,eventable_type,eventable_id,title,type,status,start_at,end_at,starts_at,ends_at,location',
             'activityLogs' => fn ($query) => $query
                 ->latest()
                 ->limit(20)
@@ -153,8 +153,10 @@ class DealController extends Controller
                 'calendar_events' => $deal->calendarEvents->map(fn ($event) => [
                     'id' => $event->id,
                     'title' => $event->title,
-                    'starts_at' => $event->starts_at?->toDateTimeString(),
-                    'ends_at' => $event->ends_at?->toDateTimeString(),
+                    'starts_at' => ($event->start_at ?? $event->starts_at)?->toDateTimeString(),
+                    'ends_at' => ($event->end_at ?? $event->ends_at)?->toDateTimeString(),
+                    'type' => $event->type,
+                    'status' => $event->status,
                     'location' => $event->location,
                 ]),
                 'activity_logs' => $deal->activityLogs->map(fn ($log) => [

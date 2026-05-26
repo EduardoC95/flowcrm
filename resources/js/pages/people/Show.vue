@@ -24,6 +24,7 @@ interface RelatedDeal {
 interface CalendarEvent {
     id: number;
     title: string;
+    start_at: string | null;
     starts_at: string;
     ends_at: string | null;
     location: string | null;
@@ -134,7 +135,7 @@ const merge = () => {
                         </Link>
                     </Button>
                     <Button as-child variant="outline">
-                        <Link href="/crm/calendar">
+                        <Link href="/calendar-events/create">
                             <CalendarPlus class="size-4" />
                             Criar evento
                         </Link>
@@ -209,8 +210,8 @@ const merge = () => {
                     <div class="mt-4 space-y-3">
                         <div v-if="person.calendar_events.length === 0" class="text-sm text-muted-foreground">Ainda não há eventos associados.</div>
                         <div v-for="event in person.calendar_events" :key="event.id" class="rounded-md border p-3">
-                            <div class="font-medium">{{ event.title }}</div>
-                            <div class="text-sm text-muted-foreground">{{ event.starts_at }} · {{ event.location ?? '-' }}</div>
+                            <Link :href="`/calendar-events/${event.id}`" class="font-medium text-primary hover:underline">{{ event.title }}</Link>
+                            <div class="text-sm text-muted-foreground">{{ event.start_at ?? event.starts_at }} · {{ event.location ?? '-' }}</div>
                         </div>
                     </div>
                 </div>
