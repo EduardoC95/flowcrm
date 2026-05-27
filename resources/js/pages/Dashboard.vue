@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type Tenant } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { Bell, BriefcaseBusiness, Building2, CalendarDays, UsersRound, Workflow } from 'lucide-vue-next';
+import { Bell, BriefcaseBusiness, Building2, CalendarDays, ClipboardList, UsersRound, Workflow } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -24,6 +24,8 @@ defineProps<{
         pendingTasks: number;
         activeAutomations: number;
         automationActivities: number;
+        leadFormsActive: number;
+        leadSubmissions: number;
     };
     dealsByStage: {
         id: number;
@@ -57,6 +59,15 @@ defineProps<{
         read_at: string | null;
         created_at: string | null;
     }[];
+    latestLeadSubmissions: {
+        id: number;
+        name: string | null;
+        email: string | null;
+        submitted_at: string | null;
+        lead_form: { id: number; name: string } | null;
+        created_deal: { id: number; title: string } | null;
+        created_person: { id: number; name: string; email: string | null } | null;
+    }[];
 }>();
 
 const shortcuts = [
@@ -64,6 +75,7 @@ const shortcuts = [
     { title: 'Pessoas', href: '/people', icon: UsersRound, description: 'Contactos e decisores associados.' },
     { title: 'Calendário', href: '/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
+    { title: 'Formulários de Leads', href: '/lead-forms', icon: ClipboardList, description: 'Captação pública ligada ao CRM.' },
     { title: 'Automações', href: '/automations', icon: Workflow, description: 'Regras para negócios sem atividade.' },
 ];
 
@@ -186,6 +198,44 @@ const money = (value: number) =>
                         </div>
                     </div>
                     <Link href="/automations" class="mt-4 inline-flex text-sm text-primary hover:underline">Gerir automações</Link>
+                </section>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Formulários ativos</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.leadFormsActive }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-muted-foreground">Leads recebidas</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.leadSubmissions }}</p>
+                        </div>
+                    </div>
+                    <Link href="/lead-forms" class="mt-4 inline-flex text-sm text-primary hover:underline">Gerir formulários</Link>
+                </section>
+
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="font-medium">Últimas leads recebidas</h2>
+                        <Link href="/lead-forms" class="text-sm text-primary hover:underline">Ver formulários</Link>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <Link
+                            v-for="submission in latestLeadSubmissions"
+                            :key="submission.id"
+                            :href="submission.created_deal ? `/deals/${submission.created_deal.id}` : '/lead-forms'"
+                            class="block rounded-md border p-3 text-sm transition hover:border-primary/60"
+                        >
+                            <p class="font-medium text-foreground">{{ submission.name ?? 'Lead sem nome' }}</p>
+                            <p class="text-muted-foreground">
+                                {{ submission.email ?? '-' }} · {{ submission.lead_form?.name ?? 'Formulário' }} ·
+                                {{ submission.submitted_at ?? '-' }}
+                            </p>
+                        </Link>
+                        <p v-if="latestLeadSubmissions.length === 0" class="text-sm text-muted-foreground">Ainda não há submissões públicas.</p>
+                    </div>
                 </section>
             </div>
 

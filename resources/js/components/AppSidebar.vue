@@ -10,6 +10,7 @@ import {
     BriefcaseBusiness,
     Building2,
     CalendarDays,
+    ClipboardList,
     KanbanSquare,
     LayoutGrid,
     Package,
@@ -53,6 +54,11 @@ const mainNavItems: NavItem[] = [
         title: 'Produtos',
         url: '/products',
         icon: Package,
+    },
+    {
+        title: 'Formulários de Leads',
+        url: '/lead-forms',
+        icon: ClipboardList,
     },
     {
         title: 'EstatÃ­sticas de Produtos',

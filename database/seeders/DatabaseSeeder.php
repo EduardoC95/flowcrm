@@ -16,6 +16,8 @@ use App\Models\DealNote;
 use App\Models\Entity;
 use App\Models\FollowUpTemplate;
 use App\Models\InternalNotification;
+use App\Models\LeadForm;
+use App\Models\LeadFormSubmission;
 use App\Models\Person;
 use App\Models\Product;
 use App\Models\Tenant;
@@ -212,6 +214,81 @@ class DatabaseSeeder extends Seeder
             'notifiable_type' => CalendarEvent::class,
             'notifiable_id' => $automationEvent->id,
         ]);
+
+        $leadForms = collect([
+            [
+                'name' => 'Pedido de contacto',
+                'slug' => 'pedido-contacto',
+                'description' => 'Formulário público para pedidos rápidos de contacto.',
+                'confirmation_message' => 'Obrigado pelo contacto. A nossa equipa vai responder em breve.',
+            ],
+            [
+                'name' => 'Pedido de proposta',
+                'slug' => 'pedido-proposta',
+                'description' => 'Formulário público para pedidos de proposta comercial.',
+                'confirmation_message' => 'Obrigado. Recebemos o pedido de proposta e vamos analisar os dados enviados.',
+            ],
+        ])->map(fn (array $attributes) => LeadForm::create([
+            ...$attributes,
+            'tenant_id' => $tenant->id,
+            'fields' => [
+                ['key' => 'name', 'label' => 'Nome', 'type' => LeadForm::FIELD_TEXT, 'required' => true, 'placeholder' => 'O seu nome'],
+                ['key' => 'email', 'label' => 'Email', 'type' => LeadForm::FIELD_EMAIL, 'required' => true, 'placeholder' => 'email@empresa.pt'],
+                ['key' => 'phone', 'label' => 'Telefone', 'type' => LeadForm::FIELD_PHONE, 'required' => false, 'placeholder' => '+351 ...'],
+                ['key' => 'company', 'label' => 'Empresa', 'type' => LeadForm::FIELD_TEXT, 'required' => false, 'placeholder' => 'Nome da empresa'],
+                ['key' => 'message', 'label' => 'Mensagem', 'type' => LeadForm::FIELD_TEXTAREA, 'required' => false, 'placeholder' => 'Como podemos ajudar?'],
+            ],
+            'active' => true,
+            'require_captcha' => true,
+            'created_by' => $user->id,
+        ]));
+
+        $leadForms->each(function (LeadForm $leadForm, int $index) use ($tenant, $user, $stages) {
+            $payload = [
+                'name' => $index === 0 ? 'Carla Mendes' : 'Pedro Rocha',
+                'email' => $index === 0 ? 'carla.lead@example.test' : 'pedro.proposta@example.test',
+                'phone' => '+351 930 200 00'.$index,
+                'company' => $index === 0 ? 'Mendes Consulting' : 'Rocha Energia',
+                'message' => $index === 0 ? 'Gostava de agendar uma chamada.' : 'Precisamos de uma proposta para automação comercial.',
+            ];
+
+            $person = Person::create([
+                'tenant_id' => $tenant->id,
+                'name' => $payload['name'],
+                'email' => $payload['email'],
+                'phone' => $payload['phone'],
+                'status' => Person::STATUS_LEAD,
+                'notes' => 'Origem: Formulário público: '.$leadForm->name."\nMensagem: ".$payload['message'],
+            ]);
+
+            $stage = $stages->get(DealStage::SLUG_LEAD);
+            $deal = Deal::create([
+                'tenant_id' => $tenant->id,
+                'person_id' => $person->id,
+                'owner_id' => $user->id,
+                'deal_stage_id' => $stage?->id,
+                'stage' => $stage?->slug ?? DealStage::SLUG_LEAD,
+                'title' => 'Lead via '.$leadForm->name.' - '.$person->name,
+                'value' => 0,
+                'probability' => 0,
+                'priority' => Deal::PRIORITY_MEDIUM,
+                'description' => 'Lead demo criada através de formulário público.',
+                'last_activity_at' => now(),
+            ]);
+
+            LeadFormSubmission::create([
+                'tenant_id' => $tenant->id,
+                'lead_form_id' => $leadForm->id,
+                'payload' => $payload,
+                'source_url' => 'https://site-demo.example/'.$leadForm->slug,
+                'ip_address' => '127.0.0.1',
+                'user_agent' => 'FlowCRM Seeder',
+                'created_person_id' => $person->id,
+                'created_deal_id' => $deal->id,
+                'captcha_passed' => true,
+                'submitted_at' => now()->subHours($index + 1),
+            ]);
+        });
 
         $products = collect([
             ['name' => 'Licença FlowCRM Core', 'sku' => 'FLOW-CORE', 'unit_price' => 1200],

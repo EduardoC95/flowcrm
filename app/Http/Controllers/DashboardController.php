@@ -9,6 +9,8 @@ use App\Models\Deal;
 use App\Models\DealStage;
 use App\Models\Entity;
 use App\Models\InternalNotification;
+use App\Models\LeadForm;
+use App\Models\LeadFormSubmission;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -97,6 +99,21 @@ class DashboardController extends Controller
                 'created_at' => $notification->created_at?->toDateTimeString(),
             ]);
 
+        $latestLeadSubmissions = LeadFormSubmission::query()
+            ->with(['leadForm:id,name', 'createdDeal:id,title', 'createdPerson:id,name,email'])
+            ->latest('submitted_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (LeadFormSubmission $submission) => [
+                'id' => $submission->id,
+                'name' => $submission->payload['name'] ?? null,
+                'email' => $submission->payload['email'] ?? null,
+                'submitted_at' => $submission->submitted_at?->toDateTimeString(),
+                'lead_form' => $submission->leadForm?->only(['id', 'name']),
+                'created_deal' => $submission->createdDeal?->only(['id', 'title']),
+                'created_person' => $submission->createdPerson?->only(['id', 'name', 'email']),
+            ]);
+
         return Inertia::render('Dashboard', [
             'tenant' => $request->user()->currentTenant?->only(['id', 'name', 'slug']),
             'stats' => [
@@ -110,11 +127,14 @@ class DashboardController extends Controller
                 'pendingTasks' => $pendingTasks,
                 'activeAutomations' => AutomationRule::where('active', true)->whereNull('paused_at')->count(),
                 'automationActivities' => AutomationRun::where('status', AutomationRun::STATUS_SUCCESS)->whereNotNull('calendar_event_id')->count(),
+                'leadFormsActive' => LeadForm::where('active', true)->count(),
+                'leadSubmissions' => LeadFormSubmission::count(),
             ],
             'dealsByStage' => $dealsByStage,
             'upcomingDeals' => $upcomingDeals,
             'upcomingActivities' => $upcomingActivities,
             'latestNotifications' => $latestNotifications,
+            'latestLeadSubmissions' => $latestLeadSubmissions,
         ]);
     }
 }

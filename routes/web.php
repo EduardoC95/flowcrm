@@ -10,10 +10,12 @@ use App\Http\Controllers\DealProductController;
 use App\Http\Controllers\DealProposalController;
 use App\Http\Controllers\DealTimelineController;
 use App\Http\Controllers\EntityController;
+use App\Http\Controllers\LeadFormController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStatsController;
+use App\Http\Controllers\PublicLeadFormController;
 use App\Http\Controllers\QuickDealActivityController;
 use App\Http\Controllers\TenantOnboardingController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +24,13 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
+
+Route::get('public/lead-forms/{slug}', [PublicLeadFormController::class, 'show'])
+    ->name('public.lead-forms.show')
+    ->middleware('throttle:30,1');
+Route::post('public/lead-forms/{slug}', [PublicLeadFormController::class, 'submit'])
+    ->name('public.lead-forms.submit')
+    ->middleware('throttle:10,1');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tenant/onboarding', [TenantOnboardingController::class, 'create'])
@@ -33,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::resource('entities', EntityController::class);
         Route::resource('products', ProductController::class);
+        Route::resource('lead-forms', LeadFormController::class);
         Route::patch('automations/{automation}/pause', [AutomationRuleController::class, 'pause'])->name('automations.pause');
         Route::patch('automations/{automation}/resume', [AutomationRuleController::class, 'resume'])->name('automations.resume');
         Route::resource('automations', AutomationRuleController::class);
