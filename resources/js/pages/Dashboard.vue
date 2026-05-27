@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type Tenant } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { BriefcaseBusiness, Building2, CalendarDays, UsersRound } from 'lucide-vue-next';
+import { Bell, BriefcaseBusiness, Building2, CalendarDays, UsersRound, Workflow } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,6 +22,8 @@ defineProps<{
         pipelineValue: number;
         todayEvents: number;
         pendingTasks: number;
+        activeAutomations: number;
+        automationActivities: number;
     };
     dealsByStage: {
         id: number;
@@ -47,6 +49,14 @@ defineProps<{
         owner: { id: number; name: string } | null;
         url: string;
     }[];
+    latestNotifications: {
+        id: number;
+        title: string;
+        body: string | null;
+        type: string;
+        read_at: string | null;
+        created_at: string | null;
+    }[];
 }>();
 
 const shortcuts = [
@@ -54,6 +64,7 @@ const shortcuts = [
     { title: 'Pessoas', href: '/people', icon: UsersRound, description: 'Contactos e decisores associados.' },
     { title: 'Calendário', href: '/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
+    { title: 'Automações', href: '/automations', icon: Workflow, description: 'Regras para negócios sem atividade.' },
 ];
 
 const money = (value: number) =>
@@ -164,6 +175,22 @@ const money = (value: number) =>
                 </section>
 
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Automações ativas</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.activeAutomations }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-muted-foreground">Atividades por automação</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.automationActivities }}</p>
+                        </div>
+                    </div>
+                    <Link href="/automations" class="mt-4 inline-flex text-sm text-primary hover:underline">Gerir automações</Link>
+                </section>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-3">
                         <h2 class="font-medium">Próximas atividades</h2>
                         <Link href="/calendar-events/create" class="text-sm text-primary hover:underline">Novo evento</Link>
@@ -181,6 +208,27 @@ const money = (value: number) =>
                             </p>
                         </Link>
                         <p v-if="upcomingActivities.length === 0" class="text-sm text-muted-foreground">Sem atividades próximas.</p>
+                    </div>
+                </section>
+
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="flex items-center gap-2 font-medium"><Bell class="size-4" /> Últimas notificações</h2>
+                        <Link href="/notifications" class="text-sm text-primary hover:underline">Ver todas</Link>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <Link
+                            v-for="notification in latestNotifications"
+                            :key="notification.id"
+                            href="/notifications"
+                            class="block rounded-md border p-3 text-sm transition hover:border-primary/60"
+                            :class="notification.read_at ? 'bg-background' : 'bg-primary/5'"
+                        >
+                            <p class="font-medium text-foreground">{{ notification.title }}</p>
+                            <p class="text-muted-foreground">{{ notification.body ?? 'Sem detalhe adicional.' }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ notification.created_at ?? '-' }}</p>
+                        </Link>
+                        <p v-if="latestNotifications.length === 0" class="text-sm text-muted-foreground">Sem notificações internas recentes.</p>
                     </div>
                 </section>
             </div>

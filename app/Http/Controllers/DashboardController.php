@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\CalendarEvent;
+use App\Models\AutomationRule;
+use App\Models\AutomationRun;
 use App\Models\Deal;
 use App\Models\DealStage;
 use App\Models\Entity;
+use App\Models\InternalNotification;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -80,6 +83,20 @@ class DashboardController extends Controller
                 'url' => route('calendar-events.show', $event),
             ]);
 
+        $latestNotifications = InternalNotification::query()
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn (InternalNotification $notification) => [
+                'id' => $notification->id,
+                'title' => $notification->title,
+                'body' => $notification->body,
+                'type' => $notification->type,
+                'read_at' => $notification->read_at?->toDateTimeString(),
+                'created_at' => $notification->created_at?->toDateTimeString(),
+            ]);
+
         return Inertia::render('Dashboard', [
             'tenant' => $request->user()->currentTenant?->only(['id', 'name', 'slug']),
             'stats' => [
@@ -91,10 +108,13 @@ class DashboardController extends Controller
                 'pipelineValue' => (float) $pipelineValue,
                 'todayEvents' => $todayEvents,
                 'pendingTasks' => $pendingTasks,
+                'activeAutomations' => AutomationRule::where('active', true)->whereNull('paused_at')->count(),
+                'automationActivities' => AutomationRun::where('status', AutomationRun::STATUS_SUCCESS)->whereNotNull('calendar_event_id')->count(),
             ],
             'dealsByStage' => $dealsByStage,
             'upcomingDeals' => $upcomingDeals,
             'upcomingActivities' => $upcomingActivities,
+            'latestNotifications' => $latestNotifications,
         ]);
     }
 }

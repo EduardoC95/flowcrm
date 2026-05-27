@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::command('followups:send-due')->everyThirtyMinutes();
+Schedule::command('automations:run')->hourly();

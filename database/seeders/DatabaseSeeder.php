@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\CalendarEvent;
 use App\Models\ActivityLog;
+use App\Models\AutomationRule;
+use App\Models\AutomationRun;
+use App\Models\CalendarEvent;
 use App\Models\Deal;
 use App\Models\DealFollowUp;
 use App\Models\DealFollowUpEmail;
@@ -13,6 +15,7 @@ use App\Models\DealProduct;
 use App\Models\DealNote;
 use App\Models\Entity;
 use App\Models\FollowUpTemplate;
+use App\Models\InternalNotification;
 use App\Models\Person;
 use App\Models\Product;
 use App\Models\Tenant;
@@ -129,6 +132,86 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Negócio demo para validar pipeline, filtros e histórico comercial.',
             ]);
         });
+
+        $deals->take(3)->each(fn (Deal $deal, int $index) => $deal->forceFill([
+            'last_activity_at' => now()->subDays(6 + ($index * 3)),
+        ])->save());
+
+        $automationRules = collect([
+            [
+                'name' => 'Follow-up de negócios parados há 5 dias',
+                'description' => 'Cria uma tarefa para rever oportunidades sem contacto recente.',
+                'inactivity_days' => 5,
+                'activity_type' => CalendarEvent::TYPE_TASK,
+                'title' => 'Follow-up automático: {deal_title}',
+                'description_template' => 'O negócio está sem atividade há {inactivity_days} dias. Rever próximos passos com {owner_name}.',
+                'due_in_days' => 1,
+                'priority' => 'inherit',
+            ],
+            [
+                'name' => 'Chamada para oportunidades sem atividade há 10 dias',
+                'description' => 'Agenda uma chamada comercial quando uma oportunidade fica demasiado tempo parada.',
+                'inactivity_days' => 10,
+                'activity_type' => CalendarEvent::TYPE_CALL,
+                'title' => 'Chamada de recuperação: {deal_title}',
+                'description_template' => 'Contactar o cliente e perceber se precisa de apoio adicional.',
+                'due_in_days' => 2,
+                'priority' => Deal::PRIORITY_HIGH,
+            ],
+        ])->map(fn (array $attributes) => AutomationRule::create([
+            'tenant_id' => $tenant->id,
+            'name' => $attributes['name'],
+            'description' => $attributes['description'],
+            'trigger_type' => AutomationRule::TRIGGER_DEAL_INACTIVITY,
+            'inactivity_days' => $attributes['inactivity_days'],
+            'action_type' => AutomationRule::ACTION_CREATE_CALENDAR_ACTIVITY,
+            'action_payload' => [
+                'activity_type' => $attributes['activity_type'],
+                'activity_title_template' => $attributes['title'],
+                'activity_description_template' => $attributes['description_template'],
+                'due_in_days' => $attributes['due_in_days'],
+                'priority' => $attributes['priority'],
+            ],
+            'notify_owner' => true,
+            'active' => true,
+            'created_by' => $user->id,
+        ]));
+
+        $automationDeal = $deals->first();
+        $automationEvent = CalendarEvent::factory()->forDeal($automationDeal)->ownedBy($user)->create([
+            'tenant_id' => $tenant->id,
+            'title' => 'Atividade demo criada por automação',
+            'description' => 'Exemplo de atividade criada por uma regra de negócio sem atividade.',
+            'notes' => 'Exemplo de atividade criada por uma regra de negócio sem atividade.',
+            'type' => CalendarEvent::TYPE_TASK,
+            'status' => CalendarEvent::STATUS_PENDING,
+            'priority' => $automationDeal?->priority ?? CalendarEvent::PRIORITY_MEDIUM,
+            'start_at' => now()->addDay()->setTime(9, 0),
+            'end_at' => now()->addDay()->setTime(10, 0),
+            'starts_at' => now()->addDay()->setTime(9, 0),
+            'ends_at' => now()->addDay()->setTime(10, 0),
+        ]);
+
+        AutomationRun::create([
+            'tenant_id' => $tenant->id,
+            'automation_rule_id' => $automationRules->first()->id,
+            'deal_id' => $automationDeal?->id,
+            'calendar_event_id' => $automationEvent->id,
+            'status' => AutomationRun::STATUS_SUCCESS,
+            'result' => 'Atividade demo criada automaticamente.',
+            'metadata' => ['source' => 'seeder'],
+            'ran_at' => now()->subDay(),
+        ]);
+
+        InternalNotification::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'title' => 'Nova atividade criada por automação',
+            'body' => 'A automação de demonstração criou uma tarefa para um negócio sem atividade.',
+            'type' => 'automation',
+            'notifiable_type' => CalendarEvent::class,
+            'notifiable_id' => $automationEvent->id,
+        ]);
 
         $products = collect([
             ['name' => 'Licença FlowCRM Core', 'sku' => 'FLOW-CORE', 'unit_price' => 1200],

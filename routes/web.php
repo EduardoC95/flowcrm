@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CalendarEventController;
+use App\Http\Controllers\AutomationRuleController;
 use App\Http\Controllers\CrmModuleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\DealProductController;
 use App\Http\Controllers\DealProposalController;
 use App\Http\Controllers\DealTimelineController;
 use App\Http\Controllers\EntityController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductStatsController;
@@ -31,6 +33,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::resource('entities', EntityController::class);
         Route::resource('products', ProductController::class);
+        Route::patch('automations/{automation}/pause', [AutomationRuleController::class, 'pause'])->name('automations.pause');
+        Route::patch('automations/{automation}/resume', [AutomationRuleController::class, 'resume'])->name('automations.resume');
+        Route::resource('automations', AutomationRuleController::class);
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::patch('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
         Route::get('product-stats', [ProductStatsController::class, 'index'])->name('product-stats.index');
         Route::get('product-stats/export', [ProductStatsController::class, 'export'])->name('product-stats.export');
         Route::post('people/{person}/merge', [PersonController::class, 'merge'])->name('people.merge');
