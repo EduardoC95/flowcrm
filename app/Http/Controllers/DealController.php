@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\DealTimelineService;
 use App\Services\FollowUpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -132,7 +133,7 @@ class DealController extends Controller
             ->with('success', 'Negócio criado com sucesso.');
     }
 
-    public function show(Deal $deal): Response
+    public function show(Deal $deal, DealTimelineService $timeline): Response
     {
         Gate::authorize('view', $deal);
 
@@ -234,7 +235,16 @@ class DealController extends Controller
                 'manageProposals' => request()->user()->can('create', [DealProposal::class, $deal]),
                 'manageFollowUp' => request()->user()->can('update', $deal),
                 'manageProducts' => request()->user()->can('update', $deal),
+                'createQuickActivities' => request()->user()->can('update', $deal),
             ],
+            'timeline' => $timeline->forDeal($deal),
+            'timelineFilters' => [
+                'type' => 'all',
+                'date_from' => null,
+                'date_to' => null,
+                'search' => null,
+            ],
+            'activityOwners' => $this->ownerOptions(request()),
             'productOptions' => Product::query()
                 ->where('active', true)
                 ->orderBy('name')

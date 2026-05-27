@@ -3,12 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\CalendarEvent;
+use App\Models\ActivityLog;
 use App\Models\Deal;
 use App\Models\DealFollowUp;
 use App\Models\DealFollowUpEmail;
 use App\Models\DealProposal;
 use App\Models\DealStage;
 use App\Models\DealProduct;
+use App\Models\DealNote;
 use App\Models\Entity;
 use App\Models\FollowUpTemplate;
 use App\Models\Person;
@@ -203,6 +205,7 @@ class DatabaseSeeder extends Seeder
         });
 
         $proposalDeal = $deals->firstWhere('title', 'CRM rollout') ?? $deals->first();
+        $followUpDeal = $deals->firstWhere('stage', DealStage::SLUG_FOLLOW_UP) ?? $deals->first();
         $proposalPath = 'deal-proposals/demo-proposal.txt';
         Storage::disk('local')->put($proposalPath, 'Proposta comercial demo FlowCRM.');
 
@@ -217,9 +220,43 @@ class DatabaseSeeder extends Seeder
             'status' => DealProposal::STATUS_DRAFT,
         ]);
 
-        $followUpDeal = $deals->firstWhere('stage', DealStage::SLUG_FOLLOW_UP) ?? $deals->first();
+        if ($followUpDeal instanceof Deal && $followUpDeal->id !== $proposalDeal?->id) {
+            DealProposal::create([
+                'tenant_id' => $tenant->id,
+                'deal_id' => $followUpDeal->id,
+                'uploaded_by' => $user->id,
+                'original_name' => 'proposta-follow-up-demo.txt',
+                'path' => $proposalPath,
+                'mime_type' => 'text/plain',
+                'size' => strlen('Proposta comercial demo FlowCRM.'),
+                'status' => DealProposal::STATUS_SENT,
+                'sent_at' => now()->subDays(2)->setTime(11, 0),
+                'sent_by' => $user->id,
+                'recipient_email' => $followUpDeal->person?->email ?? $followUpDeal->entity?->email,
+                'email_subject' => 'Proposta comercial - '.$followUpDeal->title,
+                'email_body' => 'Email demo enviado com a proposta comercial.',
+            ]);
+        }
+
+        $deals->each(fn (Deal $deal) => DealNote::create([
+            'tenant_id' => $tenant->id,
+            'deal_id' => $deal->id,
+            'user_id' => $user->id,
+            'body' => 'Nota demo sobre o contexto comercial e próximos passos deste negócio.',
+        ]));
 
         if ($followUpDeal instanceof Deal) {
+            ActivityLog::create([
+                'tenant_id' => $tenant->id,
+                'user_id' => $user->id,
+                'action' => 'demo.timeline.seeded',
+                'module' => 'deals',
+                'subject_type' => Deal::class,
+                'subject_id' => $followUpDeal->id,
+                'description' => 'Demo timeline interaction created.',
+                'properties' => ['source' => 'seeder'],
+            ]);
+
             $followUp = DealFollowUp::create([
                 'tenant_id' => $tenant->id,
                 'deal_id' => $followUpDeal->id,

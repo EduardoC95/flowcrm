@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DealTimeline from '@/components/deals/DealTimeline.vue';
+import QuickActivityForm from '@/components/deals/QuickActivityForm.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,6 +95,20 @@ interface DealProduct {
     product: ProductOption | null;
 }
 
+interface TimelineItem {
+    id: string;
+    source_type: string;
+    type: string;
+    title: string;
+    description: string | null;
+    occurred_at: string | null;
+    user_name: string | null;
+    badge_label: string;
+    icon: string;
+    metadata: Record<string, unknown>;
+    details: Record<string, unknown>;
+}
+
 const props = defineProps<{
     deal: {
         id: number;
@@ -123,8 +139,11 @@ const props = defineProps<{
         manageProposals: boolean;
         manageFollowUp: boolean;
         manageProducts: boolean;
+        createQuickActivities: boolean;
     };
     productOptions: ProductOption[];
+    activityOwners: Option[];
+    timeline: TimelineItem[];
 }>();
 
 const page = usePage<SharedData>();
@@ -613,7 +632,18 @@ const removeProduct = (dealProduct: DealProduct) => {
                 </div>
             </section>
 
-            <div class="grid gap-4 xl:grid-cols-3">
+            <div class="grid gap-4 xl:grid-cols-[1fr_2fr]">
+                <QuickActivityForm
+                    :deal-id="deal.id"
+                    :owners="activityOwners"
+                    :can-create="can.createQuickActivities"
+                    :default-owner-id="deal.owner?.id ?? null"
+                    :default-priority="deal.priority"
+                />
+                <DealTimeline :deal-id="deal.id" :items="timeline" />
+            </div>
+
+            <div class="hidden">
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <h2 class="font-medium">Eventos/Atividades</h2>
                     <div class="mt-4 space-y-3">
