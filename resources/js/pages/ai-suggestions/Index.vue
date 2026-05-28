@@ -61,8 +61,11 @@ const money = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'curren
     <Head title="Agente Comercial AI" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
-            <div v-if="page.props.flash.success" class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div class="flex h-full flex-1 flex-col gap-5 p-4 md:p-6">
+            <div
+                v-if="page.props.flash.success"
+                class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+            >
                 {{ page.props.flash.success }}
             </div>
 
@@ -71,23 +74,23 @@ const money = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'curren
                     <Bot class="size-5 text-primary" />
                     <h1 class="text-2xl font-semibold tracking-tight">Agente Comercial AI</h1>
                 </div>
-                <p class="text-sm text-muted-foreground">Sugestoes proativas para avancar negocios com o proximo passo de maior valor.</p>
+                <p class="text-sm text-muted-foreground">Sugestões proativas para avançar negócios com o próximo passo de maior valor.</p>
             </section>
 
             <div class="grid gap-4 md:grid-cols-4">
-                <div class="rounded-lg border bg-card p-4">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Pendentes</p>
                     <p class="mt-2 text-3xl font-semibold">{{ summary.pending }}</p>
                 </div>
-                <div class="rounded-lg border bg-card p-4">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Urgentes</p>
                     <p class="mt-2 text-3xl font-semibold">{{ summary.urgent }}</p>
                 </div>
-                <div class="rounded-lg border bg-card p-4">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Valor impactado</p>
                     <p class="mt-2 text-2xl font-semibold">{{ money(summary.impacted_value) }}</p>
                 </div>
-                <div class="rounded-lg border bg-card p-4">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Convertidas esta semana</p>
                     <p class="mt-2 text-3xl font-semibold">{{ summary.converted_this_week }}</p>
                 </div>
@@ -100,8 +103,8 @@ const money = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'curren
                 class="flex min-h-64 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center"
             >
                 <Target class="size-8 text-muted-foreground" />
-                <h2 class="text-lg font-medium">Sem sugestoes neste filtro</h2>
-                <p class="max-w-md text-sm text-muted-foreground">O agente vai alimentar este backlog com analise diaria e eventos recentes.</p>
+                <h2 class="text-lg font-medium">Sem sugestões neste filtro</h2>
+                <p class="max-w-md text-sm text-muted-foreground">O agente vai alimentar este backlog com análise diária e eventos recentes.</p>
                 <Button as-child variant="outline" class="mt-2"><Link href="/ai-chat">Perguntar ao Chat CRM</Link></Button>
             </div>
 

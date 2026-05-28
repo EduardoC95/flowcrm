@@ -90,7 +90,7 @@ const shortcuts = [
     { title: 'Calendário', href: '/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
     { title: 'Chat CRM', href: '/ai-chat', icon: MessageSquare, description: 'Perguntas inteligentes sobre dados do CRM.' },
-    { title: 'Agente Comercial', href: '/ai-suggestions', icon: Bot, description: 'Sugestoes AI para proximos passos.' },
+    { title: 'Agente Comercial', href: '/ai-suggestions', icon: Bot, description: 'Sugestões AI para próximos passos.' },
     { title: 'Formulários de Leads', href: '/lead-forms', icon: ClipboardList, description: 'Captação pública ligada ao CRM.' },
     { title: 'Automações', href: '/automations', icon: Workflow, description: 'Regras para negócios sem atividade.' },
 ];
@@ -106,27 +106,27 @@ const money = (value: number) =>
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 p-4">
-            <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+        <div class="flex h-full flex-1 flex-col gap-6 p-4 md:p-6">
+            <section class="rounded-lg border border-border/70 bg-card/95 p-5 shadow-[0_16px_44px_-34px_rgba(15,23,42,0.6)]">
                 <p class="text-sm text-muted-foreground">Tenant ativo</p>
                 <h1 class="mt-1 text-2xl font-semibold text-foreground">{{ tenant?.name ?? 'Sem tenant selecionado' }}</h1>
                 <p class="mt-2 text-sm text-muted-foreground">Área comercial preparada para entidades, pessoas, calendário e negócios.</p>
             </section>
 
             <div class="grid gap-4 md:grid-cols-4">
-                <div class="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Entidades</p>
                     <p class="mt-2 text-3xl font-semibold">{{ stats.entities }}</p>
                 </div>
-                <div class="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Pessoas</p>
                     <p class="mt-2 text-3xl font-semibold">{{ stats.people }}</p>
                 </div>
-                <div class="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Eventos</p>
                     <p class="mt-2 text-3xl font-semibold">{{ stats.calendarEvents }}</p>
                 </div>
-                <div class="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <div class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.5)]">
                     <p class="text-sm text-muted-foreground">Negócios</p>
                     <p class="mt-2 text-3xl font-semibold">{{ stats.deals }}</p>
                 </div>

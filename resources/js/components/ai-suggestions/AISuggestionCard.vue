@@ -27,22 +27,24 @@ defineProps<{
 </script>
 
 <template>
-    <article class="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+    <article
+        class="rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-30px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_46px_-30px_rgba(15,23,42,0.65)]"
+    >
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <BadgeAlert class="size-4 text-primary" />
                     <Link :href="suggestion.url" class="font-semibold text-primary hover:underline">{{ suggestion.title }}</Link>
-                    <span class="rounded-full border px-2 py-0.5 text-xs">{{ suggestion.priority }}</span>
-                    <span class="rounded-full border px-2 py-0.5 text-xs">score {{ suggestion.score }}</span>
-                    <span class="rounded-full border px-2 py-0.5 text-xs">{{ suggestion.status }}</span>
+                    <span class="rounded-full border bg-muted/60 px-2 py-0.5 text-xs">{{ suggestion.priority }}</span>
+                    <span class="rounded-full border bg-primary/10 px-2 py-0.5 text-xs text-primary">score {{ suggestion.score }}</span>
+                    <span class="rounded-full border bg-muted/60 px-2 py-0.5 text-xs">{{ suggestion.status }}</span>
                 </div>
                 <p class="text-sm text-muted-foreground">{{ suggestion.reason }}</p>
-                <p class="text-sm font-medium">Acao sugerida: {{ suggestion.suggested_action }}</p>
+                <p class="text-sm font-medium">Ação sugerida: {{ suggestion.suggested_action }}</p>
                 <p class="text-xs text-muted-foreground">Data sugerida: {{ suggestion.suggested_due_at ?? '-' }}</p>
                 <div class="flex flex-wrap gap-2 text-sm">
                     <Button v-if="suggestion.deal" as-child variant="outline" size="sm">
-                        <Link :href="suggestion.deal.url">Negocio: {{ suggestion.deal.title }}</Link>
+                        <Link :href="suggestion.deal.url">Negócio: {{ suggestion.deal.title }}</Link>
                     </Button>
                     <Button v-if="suggestion.person" as-child variant="outline" size="sm">
                         <Link :href="suggestion.person.url">Pessoa: {{ suggestion.person.name }}</Link>

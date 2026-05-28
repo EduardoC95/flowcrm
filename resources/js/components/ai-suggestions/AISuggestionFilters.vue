@@ -37,7 +37,7 @@ const apply = () => router.get('/ai-suggestions', form, { preserveState: true, p
             <option :value="null">Responsavel</option>
             <option v-for="user in options.users" :key="user.id" :value="user.id">{{ user.name }}</option>
         </select>
-        <Input v-else v-model="form.deal_id" placeholder="ID do negocio" />
+        <Input v-else v-model="form.deal_id" placeholder="ID do negócio" />
         <Button type="submit">Filtrar</Button>
     </form>
 </template>

@@ -95,17 +95,17 @@ const money = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'curren
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                     <h2 class="font-medium">Contexto comercial</h2>
                     <div class="mt-4 space-y-3 text-sm">
-                        <p><span class="text-muted-foreground">Acao sugerida:</span> {{ suggestion.suggested_action }}</p>
+                        <p><span class="text-muted-foreground">Ação sugerida:</span> {{ suggestion.suggested_action }}</p>
                         <p><span class="text-muted-foreground">Responsavel:</span> {{ suggestion.user?.name ?? '-' }}</p>
                         <p><span class="text-muted-foreground">Origem:</span> {{ suggestion.source ?? '-' }}</p>
-                        <Button v-if="suggestion.deal" as-child variant="outline"><Link :href="suggestion.deal.url">Abrir negocio</Link></Button>
+                        <Button v-if="suggestion.deal" as-child variant="outline"><Link :href="suggestion.deal.url">Abrir negócio</Link></Button>
                         <Button v-if="suggestion.person" as-child variant="outline"><Link :href="suggestion.person.url">Abrir pessoa</Link></Button>
                         <Button v-if="suggestion.entity" as-child variant="outline"><Link :href="suggestion.entity.url">Abrir entidade</Link></Button>
                     </div>
                 </section>
 
                 <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
-                    <h2 class="font-medium">Negocio</h2>
+                    <h2 class="font-medium">Negócio</h2>
                     <div v-if="suggestion.deal" class="mt-4 space-y-2 text-sm">
                         <p class="font-medium">{{ suggestion.deal.title }}</p>
                         <p class="text-muted-foreground">Etapa: {{ suggestion.deal.stage?.name ?? '-' }}</p>
@@ -114,7 +114,7 @@ const money = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'curren
                         <p class="text-muted-foreground">Ultima atividade: {{ suggestion.deal.last_activity_at ?? '-' }}</p>
                         <p class="text-muted-foreground">Fecho previsto: {{ suggestion.deal.expected_close_date ?? '-' }}</p>
                     </div>
-                    <p v-else class="mt-4 text-sm text-muted-foreground">Sugestao sem negocio associado.</p>
+                    <p v-else class="mt-4 text-sm text-muted-foreground">Sugestão sem negócio associado.</p>
                 </section>
             </div>
 

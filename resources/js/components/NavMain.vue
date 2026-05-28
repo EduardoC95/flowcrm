@@ -18,9 +18,9 @@ const page = usePage<SharedData>();
 </script>
 
 <template>
-    <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>Platform</SidebarGroupLabel>
-        <SidebarMenu>
+    <SidebarGroup class="px-3 py-2">
+        <SidebarGroupLabel class="px-2 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/55">CRM</SidebarGroupLabel>
+        <SidebarMenu class="gap-1">
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton as-child :is-active="item.url === page.url">
                     <Link :href="item.url">

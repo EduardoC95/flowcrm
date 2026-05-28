@@ -73,7 +73,7 @@ const mainNavItems: NavItem[] = [
         icon: ClipboardList,
     },
     {
-        title: 'EstatÃ­sticas de Produtos',
+        title: 'Estatísticas de Produtos',
         url: '/product-stats',
         icon: BarChart3,
     },

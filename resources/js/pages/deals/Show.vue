@@ -530,7 +530,7 @@ const convertSuggestion = (suggestion: AISuggestion) => {
 
                     <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                         <div class="flex items-center justify-between gap-3">
-                            <h2 class="font-medium">Follow-up automÃ¡tico</h2>
+                            <h2 class="font-medium">Follow-up automático</h2>
                             <span
                                 v-if="deal.follow_up"
                                 class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700"
@@ -540,21 +540,21 @@ const convertSuggestion = (suggestion: AISuggestion) => {
                         </div>
 
                         <div v-if="!deal.follow_up" class="mt-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                            Este negÃ³cio ainda nÃ£o tem follow-up automÃ¡tico ativo.
+                            Este negócio ainda não tem follow-up automático ativo.
                             <span v-if="deal.stage?.slug === 'follow-up'">
-                                Move novamente o cartÃ£o para Follow Up se precisares de reiniciar o ciclo.</span
+                                Move novamente o cartão para Follow Up se precisares de reiniciar o ciclo.</span
                             >
                         </div>
 
                         <div v-else class="mt-4 space-y-4 text-sm">
                             <div class="grid gap-3 rounded-md border p-3">
                                 <div>
-                                    <p class="text-muted-foreground">PrÃ³ximo envio</p>
+                                    <p class="text-muted-foreground">Próximo envio</p>
                                     <p class="font-medium">{{ deal.follow_up.next_send_at ?? '-' }}</p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <p class="text-muted-foreground">Ãšltimo envio</p>
+                                        <p class="text-muted-foreground">Último envio</p>
                                         <p>{{ deal.follow_up.last_sent_at ?? '-' }}</p>
                                     </div>
                                     <div>
@@ -706,7 +706,7 @@ const convertSuggestion = (suggestion: AISuggestion) => {
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="font-medium">Email de follow-up enviado</p>
-                                    <p class="text-muted-foreground">{{ email.sent_at ?? '-' }} Â· {{ email.recipient_email }}</p>
+                                    <p class="text-muted-foreground">{{ email.sent_at ?? '-' }} · {{ email.recipient_email }}</p>
                                     <p class="text-muted-foreground">{{ email.subject }}</p>
                                     <p v-if="email.template" class="text-xs text-muted-foreground">Template: {{ email.template.name }}</p>
                                 </div>

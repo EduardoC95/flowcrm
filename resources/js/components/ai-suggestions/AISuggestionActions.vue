@@ -12,13 +12,13 @@ const accept = () => router.patch(`/ai-suggestions/${props.suggestionId}/accept`
 const archive = () => router.patch(`/ai-suggestions/${props.suggestionId}/archive`);
 const ignore = () => router.patch(`/ai-suggestions/${props.suggestionId}/ignore`);
 const postpone = () => {
-    const value = prompt('Adiar ate quando? Use formato YYYY-MM-DD HH:mm');
+    const value = prompt('Adiar até quando? Use formato YYYY-MM-DD HH:mm');
     if (value) {
         router.patch(`/ai-suggestions/${props.suggestionId}/postpone`, { postponed_until: value });
     }
 };
 const convert = () => {
-    if (confirm('Converter esta sugestao numa atividade de calendario?')) {
+    if (confirm('Converter esta sugestão numa atividade de calendário?')) {
         router.post(`/ai-suggestions/${props.suggestionId}/convert-to-activity`);
     }
 };

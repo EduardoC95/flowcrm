@@ -119,7 +119,7 @@ const sendQuestion = async (value?: string) => {
         });
 
         if (!response.ok) {
-            throw new Error('Nao foi possivel obter resposta.');
+            throw new Error('Não foi possível obter resposta.');
         }
 
         const data = await response.json();
@@ -189,7 +189,7 @@ const executeAction = async (action: ChatAction) => {
 
     const payload = { ...(action.payload ?? {}) };
     if (!payload.deal_id && !payload.suggestion_id) {
-        const dealId = prompt('ID do negocio para associar a acao:');
+        const dealId = prompt('ID do negócio para associar a ação:');
         if (!dealId) return;
         payload.deal_id = Number(dealId);
     }
@@ -201,7 +201,7 @@ const executeAction = async (action: ChatAction) => {
     }
 
     if (action.type === 'create_activity') {
-        payload.title = payload.title || prompt('Titulo da atividade:', 'Follow-up comercial');
+        payload.title = payload.title || prompt('Título da atividade:', 'Follow-up comercial');
         payload.start_at = payload.start_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     }
 
@@ -221,7 +221,7 @@ const executeAction = async (action: ChatAction) => {
     messages.value.push({
         id: `action-${Date.now()}`,
         role: 'assistant',
-        content: data.answer_text || 'Acao concluida.',
+        content: data.answer_text || 'Ação concluída.',
         metadata: { actions: data.actions ?? [] },
     });
     await scrollToBottom();
@@ -232,24 +232,24 @@ const executeAction = async (action: ChatAction) => {
     <Head title="Chat CRM" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full min-h-[calc(100vh-5rem)] flex-1 flex-col gap-4 p-4">
+        <div class="flex h-full min-h-[calc(100vh-5rem)] flex-1 flex-col gap-5 p-4 md:p-6">
             <section class="flex flex-col gap-2">
                 <div class="flex items-center gap-2">
                     <Bot class="size-5 text-primary" />
                     <h1 class="text-2xl font-semibold tracking-tight">Chat CRM</h1>
                 </div>
                 <p class="text-sm text-muted-foreground">
-                    Pergunte sobre negocios, contactos, produtos e atividades. As respostas usam apenas consultas seguras do FlowCRM.
+                    Pergunte sobre negócios, contactos, produtos e atividades. As respostas usam apenas consultas seguras do FlowCRM.
                 </p>
             </section>
 
-            <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+            <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">{{ error }}</div>
 
             <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-[280px_1fr]">
                 <ChatConversationList :conversations="conversations" :active-id="activeConversation?.id ?? null" />
 
-                <section class="flex min-h-0 flex-col rounded-lg border border-sidebar-border/70 bg-card dark:border-sidebar-border">
-                    <div class="border-b p-4">
+                <section class="flex min-h-0 flex-col rounded-lg border border-border/70 bg-card/95 shadow-[0_16px_44px_-34px_rgba(15,23,42,0.65)]">
+                    <div class="border-b border-border/70 p-4">
                         <SuggestedQuestions :suggestions="suggestions" @send="sendQuestion" />
                     </div>
 
@@ -258,7 +258,7 @@ const executeAction = async (action: ChatAction) => {
                             <Bot class="size-8 text-muted-foreground" />
                             <h2 class="text-lg font-medium">Comece com uma pergunta comercial</h2>
                             <p class="max-w-md text-sm text-muted-foreground">
-                                Exemplo: "Qual o volume de negocios no estado Negociacao?" ou "Qual o telefone da Maria Silva?"
+                                Exemplo: "Qual o volume de negócios no estado Negociação?" ou "Qual o telefone da Maria Silva?"
                             </p>
                         </div>
 
@@ -274,7 +274,7 @@ const executeAction = async (action: ChatAction) => {
                         />
                     </div>
 
-                    <form class="flex gap-2 border-t p-4" @submit.prevent="sendQuestion()">
+                    <form class="flex gap-2 border-t border-border/70 bg-background/35 p-4" @submit.prevent="sendQuestion()">
                         <Input v-model="question" placeholder="Pergunte ao FlowCRM..." :disabled="sending" />
                         <Button type="submit" :disabled="sending || !question.trim()">
                             <SendHorizontal class="size-4" />

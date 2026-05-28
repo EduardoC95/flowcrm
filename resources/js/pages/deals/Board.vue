@@ -144,10 +144,10 @@ const dropOnStage = (stage: StageColumn) => {
     <Head title="Pipeline Kanban" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+        <div class="flex h-full flex-1 flex-col gap-5 p-4 md:p-6">
             <div
                 v-if="page.props.flash.success || flash"
-                class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
             >
                 {{ page.props.flash.success || flash }}
             </div>
@@ -174,10 +174,10 @@ const dropOnStage = (stage: StageColumn) => {
             </section>
 
             <form
-                class="grid gap-3 rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border md:grid-cols-[180px_160px_160px_150px_150px_auto]"
+                class="grid gap-3 rounded-lg border border-border/70 bg-card/95 p-4 shadow-[0_14px_38px_-32px_rgba(15,23,42,0.55)] md:grid-cols-[180px_160px_160px_150px_150px_auto]"
                 @submit.prevent="submit"
             >
-                <select v-model="form.owner_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                <select v-model="form.owner_id" class="h-9 rounded-md border border-input bg-background/70 px-3 text-sm shadow-sm">
                     <option value="">Todos os responsáveis</option>
                     <option v-for="owner in owners" :key="owner.id" :value="owner.id">{{ owner.name }}</option>
                 </select>
@@ -195,17 +195,17 @@ const dropOnStage = (stage: StageColumn) => {
                 <section
                     v-for="stage in stages"
                     :key="stage.id"
-                    class="flex min-w-72 flex-col rounded-lg border border-sidebar-border/70 bg-card dark:border-sidebar-border"
+                    class="flex min-w-72 flex-col rounded-lg border border-border/70 bg-card/70 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.55)] backdrop-blur"
                     @dragover.prevent
                     @drop.prevent="dropOnStage(stage)"
                 >
-                    <header class="border-b p-4">
+                    <header class="border-b border-border/70 p-4">
                         <div class="flex items-center justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-2">
                                 <span class="size-3 shrink-0 rounded-full" :style="{ backgroundColor: stage.color ?? '#64748b' }" />
                                 <h2 class="truncate font-medium">{{ stage.name }}</h2>
                             </div>
-                            <span class="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">{{ stage.deals_count }}</span>
+                            <span class="rounded-full border bg-muted/70 px-2 py-1 text-xs text-muted-foreground">{{ stage.deals_count }}</span>
                         </div>
                         <p class="mt-2 text-sm font-semibold">{{ money(stage.total_value) }}</p>
                     </header>
@@ -215,7 +215,7 @@ const dropOnStage = (stage: StageColumn) => {
                             v-for="deal in stage.deals"
                             :key="deal.id"
                             :draggable="can.move"
-                            class="rounded-lg border bg-background p-3 shadow-sm transition hover:border-primary/50"
+                            class="rounded-lg border border-border/70 bg-background/80 p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:bg-card hover:shadow-md"
                             :class="{ 'cursor-grab active:cursor-grabbing': can.move }"
                             @dragstart="dragStart($event, deal)"
                         >
@@ -231,7 +231,7 @@ const dropOnStage = (stage: StageColumn) => {
                                 <div>Prioridade: {{ deal.priority ? priorityLabels[deal.priority] : '-' }}</div>
                                 <div
                                     v-if="deal.active_follow_up"
-                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700"
+                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200"
                                 >
                                     Follow-up: {{ deal.active_follow_up.next_send_at ?? 'ativo' }}
                                 </div>
@@ -240,7 +240,7 @@ const dropOnStage = (stage: StageColumn) => {
 
                         <div
                             v-if="stage.deals.length === 0"
-                            class="flex min-h-32 items-center justify-center rounded-lg border border-dashed text-center text-sm text-muted-foreground"
+                            class="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-border/80 bg-background/35 text-center text-sm text-muted-foreground"
                         >
                             Sem negócios nesta etapa
                         </div>

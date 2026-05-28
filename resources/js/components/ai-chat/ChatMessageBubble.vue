@@ -33,8 +33,8 @@ const emit = defineEmits<{
 <template>
     <div class="flex" :class="role === 'user' ? 'justify-end' : 'justify-start'">
         <div
-            class="max-w-[88%] rounded-lg border px-4 py-3 text-sm leading-6"
-            :class="role === 'user' ? 'border-primary bg-primary text-primary-foreground' : 'border-sidebar-border/70 bg-card'"
+            class="max-w-[88%] rounded-lg border px-4 py-3 text-sm leading-6 shadow-sm"
+            :class="role === 'user' ? 'border-primary bg-primary text-primary-foreground' : 'border-border/70 bg-card/95'"
         >
             <p class="whitespace-pre-wrap">{{ content }}<span v-if="streaming" class="animate-pulse">|</span></p>
 
@@ -43,7 +43,7 @@ const emit = defineEmits<{
                     v-for="record in records"
                     :key="`${record.type}-${record.id}`"
                     :href="record.url || '#'"
-                    class="block rounded-md border bg-background px-3 py-2 text-foreground hover:bg-muted"
+                    class="block rounded-md border bg-background/70 px-3 py-2 text-foreground transition hover:bg-muted"
                 >
                     <span class="block font-medium">{{ record.title }}</span>
                     <span v-if="record.subtitle" class="text-xs text-muted-foreground">{{ record.subtitle }}</span>
