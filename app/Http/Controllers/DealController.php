@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MoveDealStageRequest;
 use App\Http\Requests\StoreDealRequest;
 use App\Http\Requests\UpdateDealRequest;
+use App\Models\AISuggestion;
 use App\Models\Deal;
 use App\Models\DealFollowUpEmail;
 use App\Models\DealProduct;
@@ -157,6 +158,11 @@ class DealController extends Controller
                 ->latest()
                 ->limit(20)
                 ->with('user:id,name'),
+            'aiSuggestions' => fn ($query) => $query
+                ->where('status', AISuggestion::STATUS_PENDING)
+                ->orderByDesc('score')
+                ->latest()
+                ->limit(5),
         ]);
 
         return Inertia::render('deals/Show', [
@@ -227,6 +233,15 @@ class DealController extends Controller
                     'properties' => $log->properties,
                     'created_at' => $log->created_at?->toDateTimeString(),
                     'user' => $log->user?->only(['id', 'name']),
+                ]),
+                'ai_suggestions' => $deal->aiSuggestions->map(fn (AISuggestion $suggestion) => [
+                    'id' => $suggestion->id,
+                    'title' => $suggestion->title,
+                    'reason' => $suggestion->reason,
+                    'suggested_action' => $suggestion->suggested_action,
+                    'priority' => $suggestion->priority,
+                    'score' => $suggestion->score,
+                    'url' => route('ai-suggestions.show', $suggestion),
                 ]),
             ],
             'can' => [

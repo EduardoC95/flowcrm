@@ -19,6 +19,12 @@ class LocalCRMIntentParser
             ], true);
         }
 
+        if (str_contains($normalized, 'sugest') || str_contains($normalized, 'acoes comerciais') || str_contains($normalized, 'acções comerciais') || str_contains($normalized, 'alto impacto') || str_contains($normalized, 'risco')) {
+            return $this->intent('commercial_suggestions', 0.86, [
+                'priority' => str_contains($normalized, 'alto impacto') || str_contains($normalized, 'urgente') ? 'high' : null,
+            ]);
+        }
+
         if (str_contains($normalized, 'criar') && (str_contains($normalized, 'tarefa') || str_contains($normalized, 'atividade') || str_contains($normalized, 'actividade'))) {
             return $this->intent('create_calendar_activity', 0.72, [
                 'raw_request' => $question,

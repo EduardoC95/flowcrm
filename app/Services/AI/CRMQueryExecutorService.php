@@ -3,11 +3,13 @@
 namespace App\Services\AI;
 
 use App\Models\ActivityLog;
+use App\Models\AISuggestion;
 use App\Models\CalendarEvent;
 use App\Models\Deal;
 use App\Models\DealNote;
 use App\Models\DealStage;
 use App\Models\Entity;
+use App\Models\InternalNotification;
 use App\Models\Person;
 use App\Models\Tenant;
 use App\Models\User;
@@ -40,6 +42,7 @@ class CRMQueryExecutorService
             'top_products_by_quantity' => $this->topProducts($tenantId, $parameters, 'quantity'),
             'top_products_by_value' => $this->topProducts($tenantId, $parameters, 'value'),
             'open_deals_by_owner' => $this->openDealsByOwner($tenantId, $parameters),
+            'commercial_suggestions' => $this->commercialSuggestions($user, $parameters),
             'create_deal_note' => $this->confirmationRequired('Posso criar uma nota no negocio, mas preciso que confirme a acao.', 'create_note'),
             'create_calendar_activity' => $this->confirmationRequired('Posso criar uma atividade no calendario, mas preciso que confirme a acao.', 'create_activity'),
             default => $this->help(),
@@ -118,6 +121,61 @@ class CRMQueryExecutorService
                 'actions' => [
                     $this->openRecordAction('Abrir atividade', route('calendar-events.show', $event, false)),
                     $this->openRecordAction('Abrir negocio', route('deals.show', $deal, false)),
+                ],
+            ];
+        }
+
+        if ($type === 'convert_suggestion_to_activity') {
+            $suggestion = AISuggestion::where('tenant_id', $tenantId)->findOrFail((int) ($payload['suggestion_id'] ?? 0));
+            Gate::authorize('convertToActivity', $suggestion);
+
+            $startAt = Carbon::parse($payload['start_at'] ?? $suggestion->suggested_due_at ?? now()->addDay());
+            $event = CalendarEvent::create([
+                'tenant_id' => $tenantId,
+                'deal_id' => $suggestion->deal_id,
+                'entity_id' => $suggestion->entity_id,
+                'person_id' => $suggestion->person_id,
+                'eventable_type' => $suggestion->deal_id ? Deal::class : null,
+                'eventable_id' => $suggestion->deal_id,
+                'owner_id' => $suggestion->user_id,
+                'title' => Str::limit((string) ($payload['title'] ?? $suggestion->suggested_action), 255, ''),
+                'description' => $payload['description'] ?? $suggestion->reason,
+                'notes' => $payload['description'] ?? $suggestion->reason,
+                'type' => in_array($payload['activity_type'] ?? null, CalendarEvent::TYPES, true) ? $payload['activity_type'] : CalendarEvent::TYPE_TASK,
+                'status' => CalendarEvent::STATUS_PENDING,
+                'priority' => in_array($payload['priority'] ?? null, CalendarEvent::PRIORITIES, true) ? $payload['priority'] : $suggestion->priority,
+                'start_at' => $startAt,
+                'starts_at' => $startAt,
+            ]);
+
+            $suggestion->update([
+                'status' => AISuggestion::STATUS_ACCEPTED,
+                'accepted_at' => now(),
+                'accepted_by' => $user->id,
+                'converted_calendar_event_id' => $event->id,
+            ]);
+
+            InternalNotification::create([
+                'tenant_id' => $tenantId,
+                'user_id' => $suggestion->user_id,
+                'title' => 'Sugestao convertida em atividade',
+                'body' => 'O Chat CRM criou uma atividade a partir de uma sugestao comercial.',
+                'type' => 'ai_suggestion',
+                'notifiable_type' => CalendarEvent::class,
+                'notifiable_id' => $event->id,
+            ]);
+
+            $this->log($tenantId, $user->id, 'ai_chat.action_created', 'ai_chat', $event, 'Sugestao convertida em atividade pelo Chat CRM.', [
+                'action_type' => $type,
+                'ai_suggestion_id' => $suggestion->id,
+            ]);
+
+            return [
+                'answer_text' => 'Sugestao convertida em atividade no calendario.',
+                'created_records' => [['type' => 'calendar_event', 'id' => $event->id]],
+                'actions' => [
+                    $this->openRecordAction('Abrir atividade', route('calendar-events.show', $event, false)),
+                    $this->openRecordAction('Abrir sugestao', route('ai-suggestions.show', $suggestion, false)),
                 ],
             ];
         }
@@ -355,6 +413,62 @@ class CRMQueryExecutorService
             'records' => $this->dealRecords($deals),
             'actions' => [$this->openRecordAction('Abrir negocios', route('deals.index', false))],
             'metadata' => [],
+        ];
+    }
+
+    /**
+     * @param  array<string,mixed>  $parameters
+     * @return array<string,mixed>
+     */
+    private function commercialSuggestions(User $user, array $parameters): array
+    {
+        $tenantId = (int) $user->current_tenant_id;
+        $query = AISuggestion::query()
+            ->with(['deal.stage:id,name,slug,color', 'person:id,name', 'entity:id,name'])
+            ->where('tenant_id', $tenantId)
+            ->where(function ($query) {
+                $query->where('status', AISuggestion::STATUS_PENDING)
+                    ->orWhere(fn ($query) => $query
+                        ->where('status', AISuggestion::STATUS_POSTPONED)
+                        ->where('postponed_until', '<=', now()));
+            });
+
+        if (! in_array($user->roleForTenant(), [Tenant::ROLE_OWNER, Tenant::ROLE_MANAGER], true)) {
+            $query->where('user_id', $user->id);
+        }
+
+        if (($parameters['priority'] ?? null) === 'high') {
+            $query->whereIn('priority', [AISuggestion::PRIORITY_HIGH, AISuggestion::PRIORITY_URGENT]);
+        }
+
+        $suggestions = $query
+            ->orderByDesc('score')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return [
+            'answer_text' => $suggestions->isEmpty()
+                ? 'Nao ha sugestoes comerciais pendentes neste momento.'
+                : 'Estas sao as sugestoes comerciais de maior impacto para hoje.',
+            'records' => $suggestions->map(fn (AISuggestion $suggestion) => [
+                'type' => 'ai_suggestion',
+                'id' => $suggestion->id,
+                'title' => $suggestion->title,
+                'subtitle' => $suggestion->reason.' Score: '.$suggestion->score,
+                'url' => route('ai-suggestions.show', $suggestion, false),
+            ])->values()->all(),
+            'actions' => $suggestions->flatMap(fn (AISuggestion $suggestion) => array_filter([
+                $this->openRecordAction('Abrir sugestao', route('ai-suggestions.show', $suggestion, false)),
+                $suggestion->deal ? $this->openRecordAction('Abrir negocio', route('deals.show', $suggestion->deal, false)) : null,
+                [
+                    'type' => 'convert_suggestion_to_activity',
+                    'label' => 'Converter em atividade',
+                    'requires_confirmation' => true,
+                    'payload' => ['suggestion_id' => $suggestion->id],
+                ],
+            ]))->values()->all(),
+            'metadata' => ['suggestions_count' => $suggestions->count()],
         ];
     }
 

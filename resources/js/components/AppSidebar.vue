@@ -7,6 +7,7 @@ import { type NavItem } from '@/types';
 import {
     BarChart3,
     Bell,
+    Bot,
     BriefcaseBusiness,
     Building2,
     CalendarDays,
@@ -30,6 +31,11 @@ const mainNavItems: NavItem[] = [
         title: 'Chat CRM',
         url: '/ai-chat',
         icon: MessageSquare,
+    },
+    {
+        title: 'Agente Comercial',
+        url: '/ai-suggestions',
+        icon: Bot,
     },
     {
         title: 'Entidades',

@@ -22,9 +22,10 @@ class ExecuteAIChatActionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', Rule::in(['create_note', 'create_activity'])],
+            'type' => ['required', Rule::in(['create_note', 'create_activity', 'convert_suggestion_to_activity'])],
             'payload' => ['required', 'array'],
-            'payload.deal_id' => ['required', 'integer'],
+            'payload.deal_id' => ['required_unless:type,convert_suggestion_to_activity', 'integer'],
+            'payload.suggestion_id' => ['required_if:type,convert_suggestion_to_activity', 'integer'],
             'payload.body' => ['nullable', 'string', 'max:5000'],
             'payload.title' => ['nullable', 'string', 'max:255'],
             'payload.description' => ['nullable', 'string'],

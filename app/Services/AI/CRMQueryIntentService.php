@@ -18,6 +18,7 @@ class CRMQueryIntentService
         'top_products_by_value',
         'top_products_by_quantity',
         'open_deals_by_owner',
+        'commercial_suggestions',
         'create_deal_note',
         'create_calendar_activity',
         'help',

@@ -142,4 +142,9 @@ class Deal extends Model
     {
         return $this->morphMany(ActivityLog::class, 'subject');
     }
+
+    public function aiSuggestions(): HasMany
+    {
+        return $this->hasMany(AISuggestion::class);
+    }
 }

@@ -188,7 +188,7 @@ const executeAction = async (action: ChatAction) => {
     if (!activeConversation.value) return;
 
     const payload = { ...(action.payload ?? {}) };
-    if (!payload.deal_id) {
+    if (!payload.deal_id && !payload.suggestion_id) {
         const dealId = prompt('ID do negocio para associar a acao:');
         if (!dealId) return;
         payload.deal_id = Number(dealId);

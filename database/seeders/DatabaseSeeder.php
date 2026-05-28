@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\ActivityLog;
 use App\Models\AIChatConversation;
 use App\Models\AIChatMessage;
+use App\Models\AISuggestion;
 use App\Models\AutomationRule;
 use App\Models\AutomationRun;
 use App\Models\CalendarEvent;
@@ -482,5 +483,98 @@ class DatabaseSeeder extends Seeder
                 ],
             ],
         ]);
+
+        $suggestionDeals = $deals->values();
+        collect([
+            [
+                'deal' => $suggestionDeals->get(2),
+                'type' => AISuggestion::TYPE_HIGH_VALUE_STALLED,
+                'title' => 'Desbloquear negocio de alto valor',
+                'reason' => 'Este negocio tem valor relevante e esta sem atividade recente.',
+                'action' => 'Contactar cliente prioritariamente',
+                'priority' => AISuggestion::PRIORITY_URGENT,
+                'status' => AISuggestion::STATUS_PENDING,
+                'score' => 92,
+                'source' => 'daily_analysis',
+            ],
+            [
+                'deal' => $proposalDeal,
+                'type' => AISuggestion::TYPE_PROPOSAL_SENT_NO_FOLLOWUP,
+                'title' => 'Acompanhar proposta enviada',
+                'reason' => 'Foi enviada uma proposta, mas ainda nao houve acompanhamento recente.',
+                'action' => 'Telefonar ou enviar follow-up da proposta',
+                'priority' => AISuggestion::PRIORITY_HIGH,
+                'status' => AISuggestion::STATUS_POSTPONED,
+                'score' => 78,
+                'source' => 'daily_analysis',
+                'postponed_until' => now()->addDay(),
+            ],
+            [
+                'deal' => $suggestionDeals->get(1),
+                'type' => AISuggestion::TYPE_CLOSING_DATE_NEAR,
+                'title' => 'Validar fecho previsto',
+                'reason' => 'A data prevista de fecho esta proxima.',
+                'action' => 'Marcar chamada de validacao antes do fecho',
+                'priority' => AISuggestion::PRIORITY_HIGH,
+                'status' => AISuggestion::STATUS_ACCEPTED,
+                'score' => 74,
+                'source' => 'daily_analysis',
+                'accepted_at' => now()->subDay(),
+                'accepted_by' => $user->id,
+            ],
+            [
+                'deal' => $suggestionDeals->get(0),
+                'type' => AISuggestion::TYPE_NEW_LEAD_NEEDS_FIRST_CONTACT,
+                'title' => 'Fazer primeiro contacto com lead',
+                'reason' => 'Esta lead ainda precisa de primeiro contacto.',
+                'action' => 'Criar tarefa de primeiro contacto',
+                'priority' => AISuggestion::PRIORITY_MEDIUM,
+                'status' => AISuggestion::STATUS_ARCHIVED,
+                'score' => 64,
+                'source' => 'realtime_deal_created',
+                'archived_at' => now()->subHours(6),
+                'archived_by' => $user->id,
+            ],
+            [
+                'deal' => $followUpDeal,
+                'type' => AISuggestion::TYPE_NO_ACTIVITY,
+                'title' => 'Retomar contacto comercial',
+                'reason' => 'Este negocio nao tem atividade recente ha varios dias.',
+                'action' => 'Criar tarefa de follow-up',
+                'priority' => AISuggestion::PRIORITY_HIGH,
+                'status' => AISuggestion::STATUS_PENDING,
+                'score' => 83,
+                'source' => 'daily_analysis',
+            ],
+        ])->each(function (array $attributes) use ($tenant, $user) {
+            $deal = $attributes['deal'];
+
+            if (! $deal instanceof Deal) {
+                return;
+            }
+
+            AISuggestion::create([
+                'tenant_id' => $tenant->id,
+                'user_id' => $user->id,
+                'deal_id' => $deal->id,
+                'person_id' => $deal->person_id,
+                'entity_id' => $deal->entity_id,
+                'type' => $attributes['type'],
+                'title' => $attributes['title'],
+                'reason' => $attributes['reason'],
+                'suggested_action' => $attributes['action'],
+                'suggested_due_at' => now()->addDay()->setTime(10, 0),
+                'priority' => $attributes['priority'],
+                'status' => $attributes['status'],
+                'source' => $attributes['source'],
+                'score' => $attributes['score'],
+                'metadata' => ['source' => 'seeder'],
+                'postponed_until' => $attributes['postponed_until'] ?? null,
+                'accepted_at' => $attributes['accepted_at'] ?? null,
+                'accepted_by' => $attributes['accepted_by'] ?? null,
+                'archived_at' => $attributes['archived_at'] ?? null,
+                'archived_by' => $attributes['archived_by'] ?? null,
+            ]);
+        });
     }
 }

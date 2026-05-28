@@ -109,6 +109,16 @@ interface TimelineItem {
     details: Record<string, unknown>;
 }
 
+interface AISuggestion {
+    id: number;
+    title: string;
+    reason: string;
+    suggested_action: string;
+    priority: string;
+    score: number;
+    url: string;
+}
+
 const props = defineProps<{
     deal: {
         id: number;
@@ -132,6 +142,7 @@ const props = defineProps<{
         follow_up_emails: DealFollowUpEmail[];
         calendar_events: CalendarEvent[];
         activity_logs: ActivityLog[];
+        ai_suggestions: AISuggestion[];
     };
     can: {
         update: boolean;
@@ -323,6 +334,14 @@ const removeProduct = (dealProduct: DealProduct) => {
         });
     }
 };
+
+const ignoreSuggestion = (suggestion: AISuggestion) => {
+    router.patch(`/ai-suggestions/${suggestion.id}/ignore`, {}, { preserveScroll: true });
+};
+
+const convertSuggestion = (suggestion: AISuggestion) => {
+    router.post(`/ai-suggestions/${suggestion.id}/convert-to-activity`, {}, { preserveScroll: true });
+};
 </script>
 
 <template>
@@ -395,6 +414,31 @@ const removeProduct = (dealProduct: DealProduct) => {
                 </section>
 
                 <aside class="space-y-4">
+                    <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="font-medium">Sugestões AI</h2>
+                            <Link href="/ai-suggestions" class="text-sm text-primary hover:underline">Ver backlog</Link>
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div v-for="suggestion in deal.ai_suggestions" :key="suggestion.id" class="rounded-md border p-3 text-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <Link :href="suggestion.url" class="font-medium text-primary hover:underline">{{ suggestion.title }}</Link>
+                                        <p class="mt-1 line-clamp-2 text-muted-foreground">{{ suggestion.reason }}</p>
+                                        <p class="mt-1 text-xs text-muted-foreground">Score {{ suggestion.score }} · {{ suggestion.priority }}</p>
+                                    </div>
+                                </div>
+                                <div v-if="can.update" class="mt-3 flex flex-wrap gap-2">
+                                    <Button size="sm" variant="outline" @click="convertSuggestion(suggestion)">Converter</Button>
+                                    <Button size="sm" variant="ghost" @click="ignoreSuggestion(suggestion)">Ignorar</Button>
+                                </div>
+                            </div>
+                            <p v-if="deal.ai_suggestions.length === 0" class="text-sm text-muted-foreground">
+                                Sem sugestões AI pendentes para este negócio.
+                            </p>
+                        </div>
+                    </section>
+
                     <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
                         <h2 class="font-medium">Relações</h2>
                         <div class="mt-4 space-y-3 text-sm">

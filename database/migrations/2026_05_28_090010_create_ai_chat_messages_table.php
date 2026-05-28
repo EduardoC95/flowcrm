@@ -20,8 +20,8 @@ return new class extends Migration
             $table->json('created_records')->nullable();
             $table->timestamps();
 
-            $table->index(['tenant_id', 'ai_chat_conversation_id', 'created_at']);
-            $table->index(['tenant_id', 'intent']);
+            $table->index(['tenant_id', 'ai_chat_conversation_id', 'created_at'], 'ai_msg_tenant_conversation_created_idx');
+            $table->index(['tenant_id', 'intent'], 'ai_msg_tenant_intent_idx');
         });
     }
 

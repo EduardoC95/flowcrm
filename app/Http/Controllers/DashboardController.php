@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AIChatConversation;
+use App\Models\AISuggestion;
 use App\Models\CalendarEvent;
 use App\Models\AutomationRule;
 use App\Models\AutomationRun;
@@ -13,6 +14,7 @@ use App\Models\InternalNotification;
 use App\Models\LeadForm;
 use App\Models\LeadFormSubmission;
 use App\Models\Person;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -115,6 +117,31 @@ class DashboardController extends Controller
                 'created_person' => $submission->createdPerson?->only(['id', 'name', 'email']),
             ]);
 
+        $aiSuggestionQuery = AISuggestion::query();
+
+        if (! in_array($request->user()->roleForTenant(), [Tenant::ROLE_OWNER, Tenant::ROLE_MANAGER], true)) {
+            $aiSuggestionQuery->where('user_id', $request->user()->id);
+        }
+
+        $latestAISuggestions = (clone $aiSuggestionQuery)
+            ->with(['deal:id,title,value', 'person:id,name', 'entity:id,name'])
+            ->where('status', AISuggestion::STATUS_PENDING)
+            ->orderByDesc('score')
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn (AISuggestion $suggestion) => [
+                'id' => $suggestion->id,
+                'title' => $suggestion->title,
+                'reason' => $suggestion->reason,
+                'priority' => $suggestion->priority,
+                'score' => $suggestion->score,
+                'deal' => $suggestion->deal?->only(['id', 'title', 'value']),
+                'person' => $suggestion->person?->only(['id', 'name']),
+                'entity' => $suggestion->entity?->only(['id', 'name']),
+                'url' => route('ai-suggestions.show', $suggestion),
+            ]);
+
         return Inertia::render('Dashboard', [
             'tenant' => $request->user()->currentTenant?->only(['id', 'name', 'slug']),
             'stats' => [
@@ -131,12 +158,15 @@ class DashboardController extends Controller
                 'leadFormsActive' => LeadForm::where('active', true)->count(),
                 'leadSubmissions' => LeadFormSubmission::count(),
                 'aiChatConversations' => AIChatConversation::where('user_id', $request->user()->id)->count(),
+                'aiSuggestionsPending' => (clone $aiSuggestionQuery)->where('status', AISuggestion::STATUS_PENDING)->count(),
+                'aiSuggestionsHighImpact' => (clone $aiSuggestionQuery)->where('status', AISuggestion::STATUS_PENDING)->whereIn('priority', [AISuggestion::PRIORITY_HIGH, AISuggestion::PRIORITY_URGENT])->count(),
             ],
             'dealsByStage' => $dealsByStage,
             'upcomingDeals' => $upcomingDeals,
             'upcomingActivities' => $upcomingActivities,
             'latestNotifications' => $latestNotifications,
             'latestLeadSubmissions' => $latestLeadSubmissions,
+            'latestAISuggestions' => $latestAISuggestions,
         ]);
     }
 }

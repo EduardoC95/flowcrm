@@ -137,6 +137,9 @@ class AIChatController extends Controller
                 'Que negocios fecham nos proximos 14 dias?',
                 'Quais sao os produtos com maior valor no pipeline?',
                 'Qual o telemovel do Antonio Pinheiro?',
+                'Que acoes comerciais devo fazer hoje?',
+                'Mostra-me sugestoes de alto impacto',
+                'Que negocios estao em risco?',
                 'Criar uma tarefa de follow-up para o negocio CRM rollout',
             ],
         ]);
@@ -177,6 +180,9 @@ class AIChatController extends Controller
                 'Que negocios fecham nos proximos 14 dias?',
                 'Quais sao os produtos com maior valor no pipeline?',
                 'Qual o telemovel da Maria Silva?',
+                'Que acoes comerciais devo fazer hoje?',
+                'Mostra-me sugestoes de alto impacto',
+                'Que negocios estao em risco?',
             ],
         ];
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AIChatController;
+use App\Http\Controllers\AISuggestionController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\AutomationRuleController;
 use App\Http\Controllers\CrmModuleController;
@@ -41,6 +42,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('tenant.selected')->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('ai-suggestions', [AISuggestionController::class, 'index'])->name('ai-suggestions.index');
+        Route::get('ai-suggestions/{suggestion}', [AISuggestionController::class, 'show'])->name('ai-suggestions.show');
+        Route::patch('ai-suggestions/{suggestion}/accept', [AISuggestionController::class, 'accept'])->name('ai-suggestions.accept');
+        Route::patch('ai-suggestions/{suggestion}/postpone', [AISuggestionController::class, 'postpone'])->name('ai-suggestions.postpone');
+        Route::patch('ai-suggestions/{suggestion}/archive', [AISuggestionController::class, 'archive'])->name('ai-suggestions.archive');
+        Route::patch('ai-suggestions/{suggestion}/ignore', [AISuggestionController::class, 'ignore'])->name('ai-suggestions.ignore');
+        Route::post('ai-suggestions/{suggestion}/convert-to-activity', [AISuggestionController::class, 'convertToActivity'])->name('ai-suggestions.convert-to-activity');
         Route::get('ai-chat', [AIChatController::class, 'index'])->name('ai-chat.index');
         Route::post('ai-chat', [AIChatController::class, 'storeMessage'])->name('ai-chat.store')->middleware('throttle:30,1');
         Route::get('ai-chat-suggestions', [AIChatController::class, 'suggestedQuestions'])->name('ai-chat.suggestions')->middleware('throttle:60,1');

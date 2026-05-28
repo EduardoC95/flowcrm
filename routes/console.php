@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('followups:send-due')->everyThirtyMinutes();
 Schedule::command('automations:run')->hourly();
+Schedule::command('ai:analyze-commercial')->dailyAt('08:00');

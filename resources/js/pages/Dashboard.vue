@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type Tenant } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { Bell, BriefcaseBusiness, Building2, CalendarDays, ClipboardList, MessageSquare, UsersRound, Workflow } from 'lucide-vue-next';
+import { Bell, Bot, BriefcaseBusiness, Building2, CalendarDays, ClipboardList, MessageSquare, UsersRound, Workflow } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -27,6 +27,8 @@ defineProps<{
         leadFormsActive: number;
         leadSubmissions: number;
         aiChatConversations: number;
+        aiSuggestionsPending: number;
+        aiSuggestionsHighImpact: number;
     };
     dealsByStage: {
         id: number;
@@ -69,6 +71,17 @@ defineProps<{
         created_deal: { id: number; title: string } | null;
         created_person: { id: number; name: string; email: string | null } | null;
     }[];
+    latestAISuggestions: {
+        id: number;
+        title: string;
+        reason: string;
+        priority: string;
+        score: number;
+        deal: { id: number; title: string; value: number } | null;
+        person: { id: number; name: string } | null;
+        entity: { id: number; name: string } | null;
+        url: string;
+    }[];
 }>();
 
 const shortcuts = [
@@ -77,6 +90,7 @@ const shortcuts = [
     { title: 'Calendário', href: '/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
     { title: 'Chat CRM', href: '/ai-chat', icon: MessageSquare, description: 'Perguntas inteligentes sobre dados do CRM.' },
+    { title: 'Agente Comercial', href: '/ai-suggestions', icon: Bot, description: 'Sugestoes AI para proximos passos.' },
     { title: 'Formulários de Leads', href: '/lead-forms', icon: ClipboardList, description: 'Captação pública ligada ao CRM.' },
     { title: 'Automações', href: '/automations', icon: Workflow, description: 'Regras para negócios sem atividade.' },
 ];
@@ -237,6 +251,46 @@ const money = (value: number) =>
                             </p>
                         </Link>
                         <p v-if="latestLeadSubmissions.length === 0" class="text-sm text-muted-foreground">Ainda não há submissões públicas.</p>
+                    </div>
+                </section>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <p class="text-sm text-muted-foreground">Sugestões AI pendentes</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.aiSuggestionsPending }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-muted-foreground">Ações de alto impacto</p>
+                            <p class="mt-2 text-3xl font-semibold">{{ stats.aiSuggestionsHighImpact }}</p>
+                        </div>
+                    </div>
+                    <Link href="/ai-suggestions" class="mt-4 inline-flex text-sm text-primary hover:underline">Ver Agente Comercial</Link>
+                </section>
+
+                <section class="rounded-lg border border-sidebar-border/70 bg-card p-5 dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="font-medium">Top sugestões comerciais</h2>
+                        <Link href="/ai-suggestions" class="text-sm text-primary hover:underline">Ver backlog</Link>
+                    </div>
+                    <div class="mt-4 space-y-3">
+                        <Link
+                            v-for="suggestion in latestAISuggestions"
+                            :key="suggestion.id"
+                            :href="suggestion.url"
+                            class="block rounded-md border p-3 text-sm transition hover:border-primary/60"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-medium text-foreground">{{ suggestion.title }}</p>
+                                    <p class="line-clamp-2 text-muted-foreground">{{ suggestion.reason }}</p>
+                                </div>
+                                <span class="rounded-full border px-2 py-1 text-xs">{{ suggestion.score }}</span>
+                            </div>
+                        </Link>
+                        <p v-if="latestAISuggestions.length === 0" class="text-sm text-muted-foreground">Sem sugestões AI pendentes.</p>
                     </div>
                 </section>
             </div>
