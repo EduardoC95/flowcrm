@@ -37,3 +37,28 @@ rg "download|streamDownload|response\\(\\)->stream|pdf|csv|export" app routes
 rg "OPENAI_API_KEY|api_key|Authorization" resources app
 rg "DB::raw|statement\\(|selectRaw|whereRaw|unprepared" app/Services app/Http
 ```
+
+## Validacao final de seguranca
+
+Comandos finais executados na auditoria:
+
+```bash
+php artisan optimize:clear
+php artisan migrate:fresh --seed
+php artisan route:list
+php artisan test
+npm run build
+npm run format:check
+rg "guarded\\s*=\\s*\\[\\]" app database tests
+rg "OPENAI_API_KEY" resources
+git diff --check
+```
+
+Resultado esperado apos a auditoria:
+
+- `php artisan route:list` nao apresenta `/up` nem `storage/{path}`.
+- `php artisan test` passa a suite Feature/Unit.
+- `npm run build` compila assets de producao.
+- `npm run format:check` confirma formatacao dos recursos frontend.
+- Pesquisa por `$guarded = []` devolve zero ocorrencias.
+- Pesquisa por `OPENAI_API_KEY` em `resources` devolve zero ocorrencias.
