@@ -21,7 +21,7 @@ interface PaginationLink {
     active: boolean;
 }
 
-const props = defineProps<{
+defineProps<{
     leadForms: {
         data: LeadFormRow[];
         links: PaginationLink[];

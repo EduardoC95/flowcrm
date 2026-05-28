@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivityLog;
 use App\Models\AIChatConversation;
 use App\Models\AIChatMessage;
 use App\Models\CalendarEvent;
 use App\Models\Deal;
-use App\Models\DealNote;
 use App\Models\DealProduct;
 use App\Models\DealStage;
 use App\Models\Entity;

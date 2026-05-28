@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\AISuggestionController;
-use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\AutomationRuleController;
+use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\CrmModuleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealController;

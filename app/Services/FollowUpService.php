@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Deal;
 use App\Models\DealFollowUp;
-use App\Models\DealFollowUpEmail;
 use App\Models\DealStage;
 use App\Models\FollowUpTemplate;
 use App\Models\User;

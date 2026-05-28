@@ -6,7 +6,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
 
-const props = defineProps<{
+defineProps<{
     defaults: {
         activity_type: string;
         activity_title_template: string;

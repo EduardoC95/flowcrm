@@ -48,6 +48,7 @@ class SendDueDealFollowUpsCommand extends Command
                         }
 
                         $skipped++;
+
                         continue;
                     }
 
@@ -64,6 +65,7 @@ class SendDueDealFollowUpsCommand extends Command
                             ['deal_follow_up_id' => $followUp->id],
                         );
                         $skipped++;
+
                         continue;
                     }
 
@@ -72,6 +74,7 @@ class SendDueDealFollowUpsCommand extends Command
                     if (! $template) {
                         $followUpService->scheduleNext($followUp);
                         $skipped++;
+
                         continue;
                     }
 

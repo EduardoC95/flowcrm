@@ -15,7 +15,7 @@ interface LeadField {
     options?: string[];
 }
 
-const props = defineProps<{
+defineProps<{
     defaults: { fields: LeadField[] };
     fieldTypes: { value: string; label: string }[];
 }>();

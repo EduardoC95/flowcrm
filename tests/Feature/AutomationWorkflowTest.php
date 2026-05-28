@@ -2,14 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivityLog;
 use App\Models\AutomationRule;
 use App\Models\AutomationRun;
 use App\Models\CalendarEvent;
 use App\Models\Deal;
 use App\Models\DealStage;
 use App\Models\Entity;
-use App\Models\InternalNotification;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

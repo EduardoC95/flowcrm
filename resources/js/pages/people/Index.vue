@@ -229,7 +229,7 @@ const destroy = (person: PersonRow) => {
                         :variant="link.active ? 'default' : 'outline'"
                         size="sm"
                     >
-                        <Link v-if="link.url" :href="link.url" v-html="link.label" />
+                        <Link v-if="link.url" :href="link.url"><span v-html="link.label" /></Link>
                         <span v-else v-html="link.label" />
                     </Button>
                 </div>

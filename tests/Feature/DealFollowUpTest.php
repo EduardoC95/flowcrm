@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Mail\DealFollowUpMail;
-use App\Models\ActivityLog;
 use App\Models\Deal;
 use App\Models\DealFollowUp;
 use App\Models\DealFollowUpEmail;

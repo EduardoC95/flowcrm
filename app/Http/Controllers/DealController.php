@@ -321,8 +321,7 @@ class DealController extends Controller
         Deal $deal,
         ActivityLogger $logger,
         FollowUpService $followUpService,
-    ): JsonResponse|RedirectResponse
-    {
+    ): JsonResponse|RedirectResponse {
         $previousStage = $deal->stage()->first();
         $newStage = DealStage::findOrFail($request->validated('deal_stage_id'));
 
@@ -555,8 +554,7 @@ class DealController extends Controller
         DealStage $newStage,
         FollowUpService $followUpService,
         ?User $user,
-    ): ?string
-    {
+    ): ?string {
         if ($newStage->slug === DealStage::SLUG_FOLLOW_UP && $previousStage?->slug !== DealStage::SLUG_FOLLOW_UP) {
             $followUpService->startForDeal($deal->fresh(['stage']), $user);
 

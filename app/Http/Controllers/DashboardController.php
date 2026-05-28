@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\AIChatConversation;
 use App\Models\AISuggestion;
-use App\Models\CalendarEvent;
 use App\Models\AutomationRule;
 use App\Models\AutomationRun;
+use App\Models\CalendarEvent;
 use App\Models\Deal;
 use App\Models\DealStage;
 use App\Models\Entity;

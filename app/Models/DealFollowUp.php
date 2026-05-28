@@ -14,9 +14,13 @@ class DealFollowUp extends Model
     use HasFactory;
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_PAUSED = 'paused';
+
     public const STATUS_REPLIED = 'replied';
 
     public const STATUSES = [

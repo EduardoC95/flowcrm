@@ -111,7 +111,7 @@ const money = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'curren
 
             <div v-if="suggestions.links.length > 3" class="flex flex-wrap gap-2">
                 <Button v-for="link in suggestions.links" :key="link.label" as-child variant="outline" size="sm" :disabled="!link.url">
-                    <Link v-if="link.url" :href="link.url" v-html="link.label" />
+                    <Link v-if="link.url" :href="link.url"><span v-html="link.label" /></Link>
                     <span v-else v-html="link.label" />
                 </Button>
             </div>

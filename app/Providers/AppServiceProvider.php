@@ -13,6 +13,10 @@ use App\Models\LeadForm;
 use App\Models\Person;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Observers\CalendarEventObserver;
+use App\Observers\DealNoteObserver;
+use App\Observers\DealObserver;
+use App\Observers\PersonObserver;
 use App\Policies\AIChatPolicy;
 use App\Policies\AISuggestionPolicy;
 use App\Policies\CalendarEventPolicy;
@@ -21,10 +25,6 @@ use App\Policies\DealProposalPolicy;
 use App\Policies\EntityPolicy;
 use App\Policies\LeadFormPolicy;
 use App\Policies\PersonPolicy;
-use App\Observers\CalendarEventObserver;
-use App\Observers\DealNoteObserver;
-use App\Observers\DealObserver;
-use App\Observers\PersonObserver;
 use App\Services\Captcha\CaptchaVerifier;
 use App\Services\Captcha\NullCaptchaVerifier;
 use App\Services\Captcha\TurnstileCaptchaVerifier;
@@ -40,8 +40,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(CaptchaVerifier::class, function () {
             return match (config('captcha.driver')) {
-                'turnstile' => new TurnstileCaptchaVerifier(),
-                default => new NullCaptchaVerifier(),
+                'turnstile' => new TurnstileCaptchaVerifier,
+                default => new NullCaptchaVerifier,
             };
         });
     }

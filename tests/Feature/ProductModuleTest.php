@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ActivityLog;
 use App\Models\Deal;
 use App\Models\DealProduct;
 use App\Models\DealStage;
