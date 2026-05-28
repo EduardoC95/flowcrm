@@ -13,6 +13,7 @@ import {
     ClipboardList,
     KanbanSquare,
     LayoutGrid,
+    MessageSquare,
     Package,
     UsersRound,
     Workflow,
@@ -24,6 +25,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         url: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Chat CRM',
+        url: '/ai-chat',
+        icon: MessageSquare,
     },
     {
         title: 'Entidades',

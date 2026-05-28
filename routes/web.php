@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\AutomationRuleController;
 use App\Http\Controllers\CrmModuleController;
@@ -40,6 +41,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('tenant.selected')->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('ai-chat', [AIChatController::class, 'index'])->name('ai-chat.index');
+        Route::post('ai-chat', [AIChatController::class, 'storeMessage'])->name('ai-chat.store')->middleware('throttle:30,1');
+        Route::get('ai-chat-suggestions', [AIChatController::class, 'suggestedQuestions'])->name('ai-chat.suggestions')->middleware('throttle:60,1');
+        Route::get('ai-chat/{conversation}', [AIChatController::class, 'show'])->name('ai-chat.show');
+        Route::post('ai-chat/{conversation}/messages', [AIChatController::class, 'storeMessage'])->name('ai-chat.messages.store')->middleware('throttle:30,1');
+        Route::get('ai-chat/{conversation}/stream', [AIChatController::class, 'streamMessage'])->name('ai-chat.stream')->middleware('throttle:60,1');
+        Route::post('ai-chat/{conversation}/actions', [AIChatController::class, 'executeAction'])->name('ai-chat.actions')->middleware('throttle:20,1');
+        Route::delete('ai-chat/{conversation}', [AIChatController::class, 'destroy'])->name('ai-chat.destroy');
         Route::resource('entities', EntityController::class);
         Route::resource('products', ProductController::class);
         Route::resource('lead-forms', LeadFormController::class);

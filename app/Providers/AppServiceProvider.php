@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\AIChatConversation;
 use App\Models\CalendarEvent;
 use App\Models\Deal;
 use App\Models\DealProposal;
@@ -10,6 +11,7 @@ use App\Models\LeadForm;
 use App\Models\Person;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Policies\AIChatPolicy;
 use App\Policies\CalendarEventPolicy;
 use App\Policies\DealPolicy;
 use App\Policies\DealProposalPolicy;
@@ -45,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Entity::class, EntityPolicy::class);
         Gate::policy(Person::class, PersonPolicy::class);
         Gate::policy(Deal::class, DealPolicy::class);
+        Gate::policy(AIChatConversation::class, AIChatPolicy::class);
         Gate::policy(DealProposal::class, DealProposalPolicy::class);
         Gate::policy(CalendarEvent::class, CalendarEventPolicy::class);
         Gate::policy(LeadForm::class, LeadFormPolicy::class);

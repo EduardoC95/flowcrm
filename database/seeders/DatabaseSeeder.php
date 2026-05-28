@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\ActivityLog;
+use App\Models\AIChatConversation;
+use App\Models\AIChatMessage;
 use App\Models\AutomationRule;
 use App\Models\AutomationRun;
 use App\Models\CalendarEvent;
@@ -440,5 +442,45 @@ class DatabaseSeeder extends Seeder
                 'sent_at' => now()->subDay()->setTime(10, 0),
             ]);
         }
+
+        $chatConversation = AIChatConversation::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'title' => 'Volume em negociacao',
+            'last_message_at' => now()->subMinutes(10),
+        ]);
+
+        AIChatMessage::create([
+            'tenant_id' => $tenant->id,
+            'ai_chat_conversation_id' => $chatConversation->id,
+            'user_id' => $user->id,
+            'role' => AIChatMessage::ROLE_USER,
+            'content' => 'Qual o volume de negocios no estado Negociacao?',
+        ]);
+
+        AIChatMessage::create([
+            'tenant_id' => $tenant->id,
+            'ai_chat_conversation_id' => $chatConversation->id,
+            'role' => AIChatMessage::ROLE_ASSISTANT,
+            'content' => 'O volume de negocios no estado Negociacao e 32.000,00 EUR em 1 negocio.',
+            'intent' => 'deal_volume_by_stage',
+            'metadata' => [
+                'records' => [
+                    [
+                        'type' => 'deal',
+                        'id' => $deals->firstWhere('stage', DealStage::SLUG_NEGOTIATION)?->id,
+                        'title' => 'Automacao comercial anual',
+                        'url' => '/deals/'.$deals->firstWhere('stage', DealStage::SLUG_NEGOTIATION)?->id,
+                    ],
+                ],
+                'actions' => [
+                    [
+                        'type' => 'open_record',
+                        'label' => 'Abrir negocios',
+                        'url' => '/deals',
+                    ],
+                ],
+            ],
+        ]);
     }
 }

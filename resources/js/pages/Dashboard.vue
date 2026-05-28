@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type Tenant } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { Bell, BriefcaseBusiness, Building2, CalendarDays, ClipboardList, UsersRound, Workflow } from 'lucide-vue-next';
+import { Bell, BriefcaseBusiness, Building2, CalendarDays, ClipboardList, MessageSquare, UsersRound, Workflow } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,6 +26,7 @@ defineProps<{
         automationActivities: number;
         leadFormsActive: number;
         leadSubmissions: number;
+        aiChatConversations: number;
     };
     dealsByStage: {
         id: number;
@@ -75,6 +76,7 @@ const shortcuts = [
     { title: 'Pessoas', href: '/people', icon: UsersRound, description: 'Contactos e decisores associados.' },
     { title: 'Calendário', href: '/calendar', icon: CalendarDays, description: 'Reuniões, tarefas e follow-ups.' },
     { title: 'Negócios', href: '/deals', icon: BriefcaseBusiness, description: 'Pipeline comercial e oportunidades.' },
+    { title: 'Chat CRM', href: '/ai-chat', icon: MessageSquare, description: 'Perguntas inteligentes sobre dados do CRM.' },
     { title: 'Formulários de Leads', href: '/lead-forms', icon: ClipboardList, description: 'Captação pública ligada ao CRM.' },
     { title: 'Automações', href: '/automations', icon: Workflow, description: 'Regras para negócios sem atividade.' },
 ];

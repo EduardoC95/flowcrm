@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AIChatConversation;
 use App\Models\CalendarEvent;
 use App\Models\AutomationRule;
 use App\Models\AutomationRun;
@@ -129,6 +130,7 @@ class DashboardController extends Controller
                 'automationActivities' => AutomationRun::where('status', AutomationRun::STATUS_SUCCESS)->whereNotNull('calendar_event_id')->count(),
                 'leadFormsActive' => LeadForm::where('active', true)->count(),
                 'leadSubmissions' => LeadFormSubmission::count(),
+                'aiChatConversations' => AIChatConversation::where('user_id', $request->user()->id)->count(),
             ],
             'dealsByStage' => $dealsByStage,
             'upcomingDeals' => $upcomingDeals,
