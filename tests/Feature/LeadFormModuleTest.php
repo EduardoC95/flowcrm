@@ -111,6 +111,12 @@ class LeadFormModuleTest extends TestCase
         $this->assertSame('https://example.test/contactos', $submission->source_url);
         $this->assertSame('Lead Form Test Browser', $submission->user_agent);
         $this->assertTrue($submission->captcha_passed);
+        $this->actingAs($user)
+            ->get(route('lead-forms.show', $form))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('submissions.data.0.ip_address', '127.0.0.0')
+                ->missing('submissions.data.0.user_agent')
+                ->etc());
         $this->assertSame(Person::STATUS_LEAD, $person->status);
         $this->assertSame($person->id, $deal->person_id);
         $this->assertSame($tenant->id, $deal->tenant_id);

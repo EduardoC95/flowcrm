@@ -32,7 +32,7 @@ class CalendarEventController extends Controller
 
         return Inertia::render('calendar/Index', [
             'events' => $events,
-            'feed' => $this->eventQuery($filters)->orderBy('start_at')->get()->map(fn (CalendarEvent $event) => $this->feedRow($event)),
+            'feed' => $this->feedEvents($filters),
             'filters' => $filters,
             'types' => CalendarEvent::TYPES,
             'statuses' => CalendarEvent::STATUSES,
@@ -51,10 +51,7 @@ class CalendarEventController extends Controller
         $filters = $this->validatedFilters($request);
 
         return response()->json(
-            $this->eventQuery($filters)
-                ->orderBy('start_at')
-                ->get()
-                ->map(fn (CalendarEvent $event) => $this->feedRow($event)),
+            $this->feedEvents($filters),
         );
     }
 
@@ -328,13 +325,13 @@ class CalendarEventController extends Controller
     private function formOptions(Request $request): array
     {
         return [
-            'entities' => Entity::query()->orderBy('name')->get(['id', 'name']),
-            'people' => Person::query()->with('entity:id,name')->orderBy('name')->get(['id', 'entity_id', 'name'])->map(fn (Person $person) => [
+            'entities' => Entity::query()->orderBy('name')->limit(500)->get(['id', 'name']),
+            'people' => Person::query()->with('entity:id,name')->orderBy('name')->limit(500)->get(['id', 'entity_id', 'name'])->map(fn (Person $person) => [
                 'id' => $person->id,
                 'name' => $person->name,
                 'entity_name' => $person->entity?->name,
             ]),
-            'deals' => Deal::query()->orderBy('title')->get(['id', 'title']),
+            'deals' => Deal::query()->orderBy('title')->limit(500)->get(['id', 'title']),
             'owners' => $this->ownerOptions($request),
             'types' => CalendarEvent::TYPES,
             'statuses' => CalendarEvent::STATUSES,
@@ -348,6 +345,15 @@ class CalendarEventController extends Controller
             ->orderBy('name')
             ->get(['users.id', 'users.name'])
             ->map(fn (User $user) => $user->only(['id', 'name'])) ?? collect();
+    }
+
+    private function feedEvents(array $filters)
+    {
+        return $this->eventQuery($filters)
+            ->orderBy('start_at')
+            ->limit(500)
+            ->get()
+            ->map(fn (CalendarEvent $event) => $this->feedRow($event));
     }
 
     private function eventableClass(?string $alias): ?string

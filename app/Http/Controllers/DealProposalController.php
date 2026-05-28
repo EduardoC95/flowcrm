@@ -51,7 +51,7 @@ class DealProposalController extends Controller
 
         $data = $request->validated();
 
-        Mail::to($data['recipient_email'])->send(new DealProposalMail(
+        Mail::to($data['recipient_email'])->queue(new DealProposalMail(
             $proposal,
             $data['email_subject'],
             $data['email_body'],

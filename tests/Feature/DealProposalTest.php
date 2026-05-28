@@ -132,7 +132,7 @@ class DealProposalTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success');
 
-        Mail::assertSent(DealProposalMail::class, function (DealProposalMail $mail) use ($proposal) {
+        Mail::assertQueued(DealProposalMail::class, function (DealProposalMail $mail) use ($proposal) {
             return $mail->proposal->is($proposal) && count($mail->attachments()) === 1;
         });
 

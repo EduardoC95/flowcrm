@@ -146,7 +146,7 @@ const destroy = () => {
                                 <th class="px-4 py-3 font-medium">Nome</th>
                                 <th class="px-4 py-3 font-medium">Email</th>
                                 <th class="px-4 py-3 font-medium">Origem</th>
-                                <th class="px-4 py-3 font-medium">IP</th>
+                                <th class="px-4 py-3 font-medium">IP mascarado</th>
                                 <th class="px-4 py-3 font-medium">Pessoa</th>
                                 <th class="px-4 py-3 font-medium">Negócio</th>
                             </tr>

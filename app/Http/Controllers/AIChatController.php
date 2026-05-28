@@ -167,7 +167,13 @@ class AIChatController extends Controller
             ->map(fn (AIChatConversation $conversation) => $this->conversationRow($conversation));
 
         $messages = $activeConversation
-            ? $activeConversation->messages()->oldest()->get()->map(fn (AIChatMessage $message) => $this->messageRow($message))->values()
+            ? $activeConversation->messages()
+                ->latest()
+                ->limit(100)
+                ->get()
+                ->sortBy('created_at')
+                ->map(fn (AIChatMessage $message) => $this->messageRow($message))
+                ->values()
             : collect();
 
         return [

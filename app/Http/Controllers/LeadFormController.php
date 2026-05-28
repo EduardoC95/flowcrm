@@ -81,8 +81,7 @@ class LeadFormController extends Controller
                 'name' => $submission->payload['name'] ?? null,
                 'email' => $submission->payload['email'] ?? null,
                 'source_url' => $submission->source_url,
-                'ip_address' => $submission->ip_address,
-                'user_agent' => $submission->user_agent,
+                'ip_address' => $this->maskIpAddress($submission->ip_address),
                 'captcha_passed' => $submission->captcha_passed,
                 'submitted_at' => $submission->submitted_at?->toDateTimeString(),
                 'created_person' => $submission->createdPerson?->only(['id', 'name', 'email']),
@@ -238,6 +237,25 @@ class LeadFormController extends Controller
         }
 
         return $slug;
+    }
+
+    private function maskIpAddress(?string $ipAddress): ?string
+    {
+        if (! $ipAddress) {
+            return null;
+        }
+
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return preg_replace('/\.\d+$/', '.0', $ipAddress);
+        }
+
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $segments = explode(':', $ipAddress);
+
+            return implode(':', array_slice($segments, 0, 4)).'::';
+        }
+
+        return null;
     }
 
     /**
